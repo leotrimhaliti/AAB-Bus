@@ -93,11 +93,7 @@ detox test --configuration ios.sim.debug --inspect-brk
 
 ## 📝 Test Account
 
-For testing, use these credentials:
-- **Email/Username**: `test@aab-edu.net`
-- **Password**: `password123`
-
-> **Note**: Replace these with actual test account credentials for your environment.
+For testing, use configured test credentials from environment variables.
 
 ## 🔧 Configuration
 
@@ -176,15 +172,6 @@ detox test --configuration ios.sim.debug --testNamePattern "should display login
 - [Detox API Reference](https://wix.github.io/Detox/docs/api/actions)
 - [Troubleshooting Guide](https://wix.github.io/Detox/docs/troubleshooting/building-the-app)
 
-## 🔄 CI/CD Integration
-
-Tests are automatically run in CI/CD pipeline on:
-- Pull requests
-- Commits to main branch
-- Release tags
-
-See `.github/workflows/e2e-tests.yml` for configuration.
-
 ## 📈 Metrics
 
 - **Total Tests**: 40+
@@ -192,10 +179,10 @@ See `.github/workflows/e2e-tests.yml` for configuration.
 - **Success Rate**: >95%
 - **Platforms**: iOS & Android
 
-## 🤝 Contributing
+## 📋 Guidelines
 
-When adding new features:
+When adding features:
 1. Add corresponding E2E tests
-2. Update this README if new test suites are added
-3. Ensure tests pass on both iOS and Android
-4. Add accessibility labels to new components
+2. Update documentation
+3. Test on both platforms
+4. Add accessibility labels
