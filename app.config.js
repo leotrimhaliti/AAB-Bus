@@ -28,7 +28,7 @@ export default {
       output: "single",
       favicon: "./assets/images/logo.png",
     },
-    plugins: ["expo-router", "expo-font", "expo-web-browser"],
+    plugins: ["expo-router", "expo-font", "expo-web-browser", "expo-asset"],
     experiments: {
       typedRoutes: true,
     },

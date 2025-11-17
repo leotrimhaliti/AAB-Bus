@@ -10,12 +10,16 @@ Cross-platform mobile application for **real-time GPS tracking** of university b
 
 ### 🎯 Key Highlights
 
-- 📍 **Live GPS Tracking** - Real-time bus location updates via WebSocket
-- 🗺️ **Interactive Maps** - Google Maps integration with route visualization
+- 📍 **Live GPS Tracking** - Real-time bus location updates with 10-second polling
+- 🗺️ **Interactive Maps** - Google Maps integration with route visualization and bus following
 - 🔐 **Secure Authentication** - Dual authentication (Supabase + Faculty API)
-- 📡 **Offline Support** - Cached data for offline viewing
+- 📡 **Offline Support** - Cached data for offline viewing with sync
 - 🌍 **Albanian Localization** - Full Albanian language support
 - ♿ **Accessibility** - WCAG compliant with screen reader support
+- ⏱️ **ETA Calculations** - Smart arrival time predictions based on speed and distance
+- 🔔 **Push Notifications** - Proximity alerts and arrival notifications
+- ⭐ **Favorite Stops** - Save and track your most used bus stops
+- 🎨 **Modern UI** - Polished interface with smooth animations
 
 ---
 
@@ -25,14 +29,18 @@ Cross-platform mobile application for **real-time GPS tracking** of university b
 
 | Feature | Description | Status |
 |---------|-------------|--------|
-| 🚌 Real-time Tracking | WebSocket-based live bus location updates | ✅ Active |
-| 🗺️ Route Visualization | View complete bus routes with stops | ✅ Active |
+| 🚌 Real-time Tracking | 10-second polling with live bus location updates | ✅ Active |
+| 🗺️ Route Visualization | Complete bus routes with stops and progress tracking | ✅ Active |
 | 👤 User Profiles | Faculty API integration for student/staff data | ✅ Active |
 | 🔒 Secure Auth | Token encryption with expo-secure-store | ✅ Active |
 | 📴 Offline Mode | Cached data when network unavailable | ✅ Active |
-| 🔄 Auto-refresh | Automatic polling fallback mechanism | ✅ Active |
-| 🎨 Modern UI | Clean, intuitive interface design | ✅ Active |
+| 🔄 Auto-refresh | Automatic polling with smart retry mechanisms | ✅ Active |
+| 🎨 Modern UI | Clean, intuitive interface with smooth animations | ✅ Active |
 | 📊 Error Tracking | Sentry integration for crash reporting | ✅ Active |
+| ⏱️ ETA Predictions | Smart arrival time calculations | ✅ Active |
+| 🔔 Push Notifications | Proximity and arrival alerts | ✅ Active |
+| ⭐ Favorite Stops | Save and track favorite bus stops | ✅ Active |
+| 📍 Bus Following | Camera follows selected bus in real-time | ✅ Active |
 
 ---
 

@@ -5,9 +5,13 @@ import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { initSentry } from './SentryInit';
+import { preloadImages } from '@/utils/imagePreloader';
 
 // Initialize Sentry
 initSentry();
+
+// Preload images on app start
+preloadImages().catch(err => console.warn('Image preload failed:', err));
 
 function RootNavigator() {
   const { session, loading } = useAuth();
@@ -27,7 +31,6 @@ function RootNavigator() {
       <Stack.Screen name="login" />
       <Stack.Screen name="signup" />
       <Stack.Screen name="(tabs)" />
-      <Stack.Screen name="+not-found" />
     </Stack>
   );
 }

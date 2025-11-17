@@ -13,6 +13,7 @@ import { Navigation } from 'lucide-react-native';
 import { useBusLocations } from '../../hooks/useBusLocations';
 import { useBusStops } from '../../hooks/useBusStops';
 import { MapSkeleton } from '@/components/ui/Skeleton';
+import { ErrorState } from '@/components/ui/ErrorState';
 
 // Memoized Bus Marker Component for performance with pulsing animation
 const BusMarker = React.memo(({ 
@@ -121,7 +122,7 @@ export default function BusTrackingScreen() {
   const [busProgress, setBusProgress] = useState<{ [key: string]: number }>({});
   const mapRef = useRef<MapView>(null);
 
-  const restUrl = 'https://testapieservice.aab-edu.net/api/buss/locations';
+  const restUrl = process.env.EXPO_PUBLIC_BUS_API_URL + '/api/buss/locations' || 'https://testapieservice.aab-edu.net/api/buss/locations';
   const wsUrl = null; // WebSocket URL if available
 
   const { 
@@ -183,22 +184,6 @@ export default function BusTrackingScreen() {
     setIsFollowing(false);
   }, []);
 
-  // Calculate distance between two coordinates (Haversine formula)
-  const calculateDistance = useCallback((lat1: number, lon1: number, lat2: number, lon2: number) => {
-    const R = 6371e3; // Earth's radius in meters
-    const φ1 = lat1 * Math.PI / 180;
-    const φ2 = lat2 * Math.PI / 180;
-    const Δφ = (lat2 - lat1) * Math.PI / 180;
-    const Δλ = (lon2 - lon1) * Math.PI / 180;
-
-    const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-              Math.cos(φ1) * Math.cos(φ2) *
-              Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-    return R * c; // Distance in meters
-  }, []);
-
   // Track which direction the bus is going (outbound or return)
   const [busDirection, setBusDirection] = useState<{ [key: string]: 'outbound' | 'return' }>({});
 
@@ -222,7 +207,11 @@ export default function BusTrackingScreen() {
     let minDistance = Infinity;
 
     routeStops.forEach((stop, index) => {
-      const distance = calculateDistance(busLat, busLng, stop.latitude, stop.longitude);
+      const stopLat = stop.latitude;
+      const stopLng = stop.longitude;
+      const distance = Math.sqrt(
+        Math.pow(busLat - stopLat, 2) + Math.pow(busLng - stopLng, 2)
+      ) * 111000; // rough approximation in meters
       if (distance < minDistance) {
         minDistance = distance;
         closestIndex = index;
@@ -270,7 +259,7 @@ export default function BusTrackingScreen() {
     }
 
     return newProgress;
-  }, [selectedBus, busData, routeStops, calculateDistance, busProgress, busDirection]);
+  }, [selectedBus, busData, routeStops, busProgress, busDirection]);
 
   // Follow selected bus when its position updates
   useEffect(() => {
@@ -306,20 +295,15 @@ export default function BusTrackingScreen() {
 
   if ((error && !busData) || busStopsError) {
     return (
-      <View style={styles.centerContainer}>
-        <Text style={styles.errorText}>
-          {error && !busData ? 'Nuk u mund të ngarkohen të dhënat e autobusëve.' : ''}
-          {busStopsError ? '\nNuk u mund të ngarkohen stacionet e autobusit.' : ''}
-        </Text>
-        <TouchableOpacity
-          style={styles.retryButton}
-          onPress={() => {
-            refresh();
-          }}
-        >
-          <Text style={styles.retryButtonText}>Provo përsëri</Text>
-        </TouchableOpacity>
-      </View>
+      <ErrorState
+        title="Gabim në Ngarkim"
+        message={
+          error && !busData
+            ? 'Nuk u mund të ngarkohen të dhënat e autobusëve. Kontrolloni lidhjen me internet dhe provoni përsëri.'
+            : 'Nuk u mund të ngarkohen stacionet e autobusit. Kontrolloni lidhjen me internet dhe provoni përsëri.'
+        }
+        onRetry={refresh}
+      />
     );
   }
 
@@ -409,7 +393,6 @@ export default function BusTrackingScreen() {
             {routeStops.map((stop, index) => {
               const isPassed = currentStopIndex !== -1 && currentStopIndex > index;
               const isCurrent = currentStopIndex !== -1 && currentStopIndex === index;
-              const isUpcoming = currentStopIndex !== -1 && currentStopIndex < index;
 
               return (
                 <View key={index} style={styles.stopItem}>

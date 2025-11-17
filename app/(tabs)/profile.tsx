@@ -93,7 +93,7 @@ export default function ProfileScreen() {
     }
     try {
       const response = await fetch(
-        'https://testapieservice.uniaab.com/api/profile/details',
+        `${process.env.EXPO_PUBLIC_FACULTY_API_URL || 'https://testapieservice.uniaab.com'}/api/profile/details`,
         {
           method: 'GET',
           headers: {

@@ -9,8 +9,10 @@ import {
   KeyboardAvoidingView,
   Platform,
   Image,
+  Modal,
 } from 'react-native';
 import { router } from 'expo-router';
+import { X } from 'lucide-react-native';
 import logo from '@/assets/images/logobus.png';
 import { useAuth } from '@/contexts/AuthContext';
 import { validateEmail, validatePassword } from '@/lib/validation';
@@ -23,6 +25,12 @@ export default function LoginScreen() {
   const [error, setError] = useState('');
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [contractId, setContractId] = useState('');
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetError, setResetError] = useState('');
+  const [resetSuccess, setResetSuccess] = useState(false);
 
   const handleLogin = async () => {
     // Clear previous errors
@@ -58,6 +66,33 @@ export default function LoginScreen() {
       console.log('Login error:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handlePasswordReset = async () => {
+    setResetError('');
+    
+    if (!phoneNumber || !contractId) {
+      setResetError('Ju lutem plotësoni të gjitha fushat');
+      return;
+    }
+
+    setResetLoading(true);
+    
+    try {
+      // Simulate API call - replace with actual password reset logic
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      setResetSuccess(true);
+      setTimeout(() => {
+        setShowForgotPassword(false);
+        setResetSuccess(false);
+        setPhoneNumber('');
+        setContractId('');
+      }, 2000);
+    } catch (err) {
+      setResetError('Diçka shkoi keq. Ju lutem provoni përsëri.');
+    } finally {
+      setResetLoading(false);
     }
   };
 
@@ -123,7 +158,7 @@ export default function LoginScreen() {
           </TouchableOpacity>
 
           <TouchableOpacity 
-            onPress={() => {}}
+            onPress={() => setShowForgotPassword(true)}
             accessible={true}
             accessibilityLabel="Keni harruar fjalëkalimin"
             accessibilityRole="button"
@@ -134,6 +169,83 @@ export default function LoginScreen() {
           </TouchableOpacity>
         </View>
       </View>
+
+      {/* Forgot Password Modal */}
+      <Modal
+        visible={showForgotPassword}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowForgotPassword(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Keni harruar fjalëkalimin?!</Text>
+              <TouchableOpacity 
+                onPress={() => {
+                  setShowForgotPassword(false);
+                  setResetError('');
+                  setPhoneNumber('');
+                  setContractId('');
+                }}
+                style={styles.closeButton}
+              >
+                <X size={24} color="#666" />
+              </TouchableOpacity>
+            </View>
+
+            {resetSuccess ? (
+              <View style={styles.successContainer}>
+                <Text style={styles.successText}>✓ Fjalëkalimi u rivendos me sukses!</Text>
+              </View>
+            ) : (
+              <>
+                <Text style={styles.modalDescription}>
+                  Ju lutem të shkruani numrin tuaj të telefonit!
+                </Text>
+
+                <View style={styles.phoneInputContainer}>
+                  <View style={styles.phonePrefix}>
+                    <Text style={styles.phonePrefixText}>+383</Text>
+                  </View>
+                  <TextInput
+                    style={styles.phoneInput}
+                    placeholder="Numri juaj i telefonit"
+                    placeholderTextColor="#999"
+                    value={phoneNumber}
+                    onChangeText={setPhoneNumber}
+                    keyboardType="phone-pad"
+                    editable={!resetLoading}
+                  />
+                </View>
+
+                <TextInput
+                  style={styles.modalInput}
+                  placeholder="Numri juaj i kontratës: ID"
+                  placeholderTextColor="#999"
+                  value={contractId}
+                  onChangeText={setContractId}
+                  editable={!resetLoading}
+                />
+
+                {resetError ? <Text style={styles.errorText}>{resetError}</Text> : null}
+
+                <TouchableOpacity
+                  style={styles.resetButton}
+                  onPress={handlePasswordReset}
+                  disabled={resetLoading}
+                >
+                  {resetLoading ? (
+                    <ActivityIndicator color="#fff" />
+                  ) : (
+                    <Text style={styles.resetButtonText}>Dërgo</Text>
+                  )}
+                </TouchableOpacity>
+              </>
+            )}
+          </View>
+        </View>
+      </Modal>
     </KeyboardAvoidingView>
   );
 }
@@ -158,62 +270,143 @@ const styles = StyleSheet.create({
   },
   input: {
     width: '100%',
-    height: 56,
-    borderWidth: 1.5,
-    borderColor: '#e2e8f0',
-    borderRadius: 14,
-    paddingHorizontal: 20,
-    marginBottom: 12,
+    height: 50,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    marginBottom: 16,
     fontSize: 16,
-    backgroundColor: '#ffffff',
-    fontWeight: '500',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
+    backgroundColor: '#fff',
   },
   inputError: {
     borderColor: '#dc2626',
-    borderWidth: 2,
-    backgroundColor: '#fef2f2',
   },
   loginButton: {
-    height: 56,
-    minHeight: 56,
+    height: 50,
     backgroundColor: '#c62829',
-    borderRadius: 14,
+    borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 20,
+    marginTop: 8,
     width: '100%',
-    shadowColor: '#c62829',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 8,
-    elevation: 6,
-    borderWidth: 1,
-    borderColor: '#b91c1c',
   },
   loginButtonText: { 
-    color: '#ffffff', 
-    fontSize: 18, 
-    fontWeight: '800',
-    letterSpacing: 0.5,
+    color: '#fff', 
+    fontSize: 16, 
+    fontWeight: '600',
   },
   forgotPassword: { 
     textAlign: 'center', 
-    marginTop: 20, 
+    marginTop: 16, 
     fontSize: 14, 
-    color: '#64748b',
-    fontWeight: '600',
+    color: '#666',
   },
   errorText: { 
     color: '#dc2626', 
-    fontSize: 14, 
+    fontSize: 13, 
     marginBottom: 8, 
     textAlign: 'left', 
     width: '100%',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 24,
+    width: '100%',
+    maxWidth: 400,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1a1a1a',
+    flex: 1,
+  },
+  closeButton: {
+    padding: 4,
+  },
+  modalDescription: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 20,
+  },
+  phoneInputContainer: {
+    flexDirection: 'row',
+    marginBottom: 16,
+    width: '100%',
+  },
+  phonePrefix: {
+    height: 50,
+    backgroundColor: '#f5f5f5',
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRightWidth: 0,
+    borderTopLeftRadius: 8,
+    borderBottomLeftRadius: 8,
+    paddingHorizontal: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  phonePrefixText: {
+    fontSize: 16,
+    color: '#1a1a1a',
+    fontWeight: '500',
+  },
+  phoneInput: {
+    flex: 1,
+    height: 50,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderTopRightRadius: 8,
+    borderBottomRightRadius: 8,
+    paddingHorizontal: 16,
+    fontSize: 16,
+    backgroundColor: '#fff',
+  },
+  modalInput: {
+    width: '100%',
+    height: 50,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    marginBottom: 16,
+    fontSize: 16,
+    backgroundColor: '#fff',
+  },
+  resetButton: {
+    height: 50,
+    backgroundColor: '#c62829',
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  resetButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  successContainer: {
+    paddingVertical: 32,
+    alignItems: 'center',
+  },
+  successText: {
+    fontSize: 16,
+    color: '#10b981',
     fontWeight: '600',
   },
 });
