@@ -16,10 +16,8 @@ Cross-platform mobile application for **real-time GPS tracking** of university b
 - 📡 **Offline Support** - Cached data for offline viewing with sync
 - 🌍 **Albanian Localization** - Full Albanian language support
 - ♿ **Accessibility** - WCAG compliant with screen reader support
-- ⏱️ **ETA Calculations** - Smart arrival time predictions based on speed and distance
-- 🔔 **Push Notifications** - Proximity alerts and arrival notifications
-- ⭐ **Favorite Stops** - Save and track your most used bus stops
 - 🎨 **Modern UI** - Polished interface with smooth animations
+- 🔄 **Smart Retry** - Automatic retry with exponential backoff
 
 ---
 
@@ -37,10 +35,9 @@ Cross-platform mobile application for **real-time GPS tracking** of university b
 | 🔄 Auto-refresh | Automatic polling with smart retry mechanisms | ✅ Active |
 | 🎨 Modern UI | Clean, intuitive interface with smooth animations | ✅ Active |
 | 📊 Error Tracking | Sentry integration for crash reporting | ✅ Active |
-| ⏱️ ETA Predictions | Smart arrival time calculations | ✅ Active |
-| 🔔 Push Notifications | Proximity and arrival alerts | ✅ Active |
-| ⭐ Favorite Stops | Save and track favorite bus stops | ✅ Active |
 | 📍 Bus Following | Camera follows selected bus in real-time | ✅ Active |
+| 🔑 Password Reset | Modal popup for password recovery | ✅ Active |
+| 🖼️ Image Preloading | Prevents flickering with expo-asset | ✅ Active |
 
 ---
 
