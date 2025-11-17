@@ -2,19 +2,6 @@
 
 First off, thank you for considering contributing to the AAB Bus Tracking App! 🎉
 
-## 📋 Table of Contents
-
-- [Code of Conduct](#code-of-conduct)
-- [Getting Started](#getting-started)
-- [Development Workflow](#development-workflow)
-- [Coding Standards](#coding-standards)
-- [Testing Guidelines](#testing-guidelines)
-- [Commit Messages](#commit-messages)
-- [Pull Request Process](#pull-request-process)
-- [Project Structure](#project-structure)
-
----
-
 ## 📜 Code of Conduct
 
 This project adheres to a code of conduct that all contributors are expected to follow:
