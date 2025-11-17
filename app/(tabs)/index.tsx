@@ -1,6 +1,5 @@
 import React, { useRef, useState, useMemo, useCallback, useEffect } from 'react';
 import {
-  ActivityIndicator,
   ScrollView,
   StyleSheet,
   Text,
@@ -11,10 +10,9 @@ import {
 } from 'react-native';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { Navigation } from 'lucide-react-native';
-import { BusData } from '@/types/bus';
 import { useBusLocations } from '../../hooks/useBusLocations';
 import { useBusStops } from '../../hooks/useBusStops';
-import { MapSkeleton, RouteListSkeleton } from '@/components/ui/Skeleton';
+import { MapSkeleton } from '@/components/ui/Skeleton';
 
 // Memoized Bus Marker Component for performance with pulsing animation
 const BusMarker = React.memo(({ 
@@ -317,7 +315,6 @@ export default function BusTrackingScreen() {
           style={styles.retryButton}
           onPress={() => {
             refresh();
-            if (typeof busStopsError !== 'undefined') window.location.reload();
           }}
         >
           <Text style={styles.retryButtonText}>Provo përsëri</Text>
