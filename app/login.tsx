@@ -11,29 +11,52 @@ import {
   Image,
 } from 'react-native';
 import { router } from 'expo-router';
+import logo from '@/assets/images/logobus.png';
 import { useAuth } from '@/contexts/AuthContext';
-import logo from '@/assets/images/logobus.png'; // ← sigurohu që ekziston kjo rrugë
+import { validateEmail, validatePassword } from '@/lib/validation';
 
 export default function LoginScreen() {
+  const { signIn } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const { signIn } = useAuth();
+  const [emailError, setEmailError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
 
   const handleLogin = async () => {
-    if (!email || !password) {
-      setError('Please fill in all fields');
+    // Clear previous errors
+    setError('');
+    setEmailError('');
+    setPasswordError('');
+
+    // Validate email
+    const emailValidation = validateEmail(email);
+    if (!emailValidation.valid) {
+      setEmailError(emailValidation.error || '');
+      return;
+    }
+
+    // Validate password
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.valid) {
+      setPasswordError(passwordValidation.error || '');
       return;
     }
 
     setLoading(true);
-    setError('');
 
-    const { error } = await signIn(email, password);
-
-    if (error) {
-      setError(error.message);
+    try {
+      const { error: loginError } = await signIn(email, password);
+      if (loginError) {
+        setError(loginError.message || 'Kredencialet janë të gabuara');
+      } else {
+        router.replace('/'); // navigate to home on success
+      }
+    } catch (err) {
+      setError('Diçka shkoi keq. Ju lutem provoni përsëri.');
+      console.log('Login error:', err);
+    } finally {
       setLoading(false);
     }
   };
@@ -45,27 +68,41 @@ export default function LoginScreen() {
     >
       <View style={styles.content}>
         <View style={styles.formContainer}>
-          {/* LOGO NALT */}
           <Image source={logo} style={styles.logo} resizeMode="contain" />
 
           <TextInput
-            style={styles.input}
+            style={[styles.input, emailError ? styles.inputError : null]}
             placeholder="Përdoruesi"
             placeholderTextColor="#999"
             value={email}
-            onChangeText={setEmail}
+            onChangeText={(text) => {
+              setEmail(text);
+              setEmailError('');
+            }}
             autoCapitalize="none"
-            keyboardType="email-address"
+            editable={!loading}
+            accessible={true}
+            accessibilityLabel="Përdoruesi"
+            accessibilityHint="Shkruani username-in tuaj"
           />
+          {emailError ? <Text style={styles.errorText}>{emailError}</Text> : null}
 
           <TextInput
-            style={styles.input}
+            style={[styles.input, passwordError ? styles.inputError : null]}
             placeholder="Fjalëkalimi"
             placeholderTextColor="#999"
             value={password}
-            onChangeText={setPassword}
+            onChangeText={(text) => {
+              setPassword(text);
+              setPasswordError('');
+            }}
             secureTextEntry
+            editable={!loading}
+            accessible={true}
+            accessibilityLabel="Fjalëkalimi"
+            accessibilityHint="Shkruani fjalëkalimin tuaj"
           />
+          {passwordError ? <Text style={styles.errorText}>{passwordError}</Text> : null}
 
           {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
@@ -73,6 +110,10 @@ export default function LoginScreen() {
             style={styles.loginButton}
             onPress={handleLogin}
             disabled={loading}
+            accessible={true}
+            accessibilityLabel="Kyçu"
+            accessibilityHint="Kliko për tu kyçur në aplikacion"
+            accessibilityRole="button"
           >
             {loading ? (
               <ActivityIndicator color="#fff" />
@@ -81,89 +122,98 @@ export default function LoginScreen() {
             )}
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={() => {}}>
-            <Text style={styles.forgotPassword}>Keni harruar fjalëkalimin?! Klikoni këtu</Text>
+          <TouchableOpacity 
+            onPress={() => {}}
+            accessible={true}
+            accessibilityLabel="Keni harruar fjalëkalimin"
+            accessibilityRole="button"
+          >
+            <Text style={styles.forgotPassword}>
+              Keni harruar fjalëkalimin?! Klikoni këtu
+            </Text>
           </TouchableOpacity>
         </View>
-
-        <TouchableOpacity onPress={() => router.push('/signup')}>
-          <Text style={styles.signUpText}>Sign up</Text>
-        </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
+  container: { 
+    flex: 1, 
+    backgroundColor: '#f5f7fa' 
   },
-  content: {
-    flex: 1,
-    justifyContent: 'space-between',
-    paddingHorizontal: 32,
-    paddingTop: 100,
-    paddingBottom: 50,
+  content: { 
+    flex: 1, 
+    justifyContent: 'center', 
+    paddingHorizontal: 32 
   },
-  title: {
-    fontSize: 20,
-    fontWeight: '300',
-    color: '#000',
-    lineHeight: 40,
+  formContainer: { 
+    alignItems: 'center' 
   },
-  formContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    marginTop: -80,
-    alignItems: 'center',
-  },
-  logo: {
-    width: 200,
-    height: 200,
-    marginBottom: 20,
+  logo: { 
+    width: 180, 
+    height: 180, 
+    marginBottom: 32 
   },
   input: {
     width: '100%',
-    height: 50,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    marginBottom: 16,
+    height: 56,
+    borderWidth: 1.5,
+    borderColor: '#e2e8f0',
+    borderRadius: 14,
+    paddingHorizontal: 20,
+    marginBottom: 12,
     fontSize: 16,
-    backgroundColor: '#fff',
+    backgroundColor: '#ffffff',
+    fontWeight: '500',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  inputError: {
+    borderColor: '#dc2626',
+    borderWidth: 2,
+    backgroundColor: '#fef2f2',
   },
   loginButton: {
-    height: 50,
+    height: 56,
+    minHeight: 56,
     backgroundColor: '#c62829',
-    borderRadius: 8,
+    borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 8,
+    marginTop: 20,
     width: '100%',
+    shadowColor: '#c62829',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    elevation: 6,
+    borderWidth: 1,
+    borderColor: '#b91c1c',
   },
-  loginButtonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: '500',
+  loginButtonText: { 
+    color: '#ffffff', 
+    fontSize: 18, 
+    fontWeight: '800',
+    letterSpacing: 0.5,
   },
-  forgotPassword: {
-    textAlign: 'center',
-    marginTop: 16,
-    fontSize: 14,
-    color: '#666',
+  forgotPassword: { 
+    textAlign: 'center', 
+    marginTop: 20, 
+    fontSize: 14, 
+    color: '#64748b',
+    fontWeight: '600',
   },
-  signUpText: {
-    textAlign: 'center',
-    fontSize: 16,
-    color: '#a8a8a8ff',
-    fontWeight: '500',
-  },
-  errorText: {
-    color: '#E74C3C',
-    fontSize: 14,
-    marginBottom: 8,
-    textAlign: 'center',
+  errorText: { 
+    color: '#dc2626', 
+    fontSize: 14, 
+    marginBottom: 8, 
+    textAlign: 'left', 
+    width: '100%',
+    fontWeight: '600',
   },
 });

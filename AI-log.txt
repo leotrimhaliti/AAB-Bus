@@ -3,3 +3,6 @@
 3. How do i make the static lines where the bus has to go(fixed route)
 4. How do i connect to expo if im not in the same network
 5. Where can i find the google maps API key
+6.How do I cluster buses on the map if there are many in one area?
+7.How do I make the map zoom in and out
+8.How do I handle offline mode when the user loses network?

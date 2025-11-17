@@ -1,7 +1,7 @@
 export const ROUTE_COORDINATES = [
   { latitude: 42.638866, longitude: 21.113864 },
   { latitude: 42.638870, longitude: 21.113086 },
-  { latitude: 42.639249, longitude: 21.112887, name: "Kolegji AAB" },
+  { latitude: 42.639249, longitude: 21.112887, name: "Kolegji AAB (Nisje)" },
   { latitude: 42.639991, longitude: 21.112474 },
   { latitude: 42.641068, longitude: 21.111895 },
   { latitude: 42.641642, longitude: 21.111562 },
@@ -97,5 +97,5 @@ export const ROUTE_COORDINATES = [
   { latitude: 42.640660, longitude: 21.112054 },
   { latitude: 42.640115, longitude: 21.112328 },
   { latitude: 42.639160, longitude: 21.112886 },
-  { latitude: 42.638853, longitude: 21.113041 },
+  { latitude: 42.638853, longitude: 21.113041, name: "Kolegji AAB (Kthim)" },
 ];

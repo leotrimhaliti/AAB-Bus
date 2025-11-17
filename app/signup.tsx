@@ -12,7 +12,8 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
-import logo from '@/assets/images/logobus.png'; // 👈 sigurohu që rruga ekziston
+import logo from '@/assets/images/logobus.png';
+import { validateEmail, validatePassword, validatePasswordMatch } from '@/lib/validation';
 
 export default function SignUpScreen() {
   const [email, setEmail] = useState('');
@@ -20,31 +21,45 @@ export default function SignUpScreen() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [emailError, setEmailError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [confirmPasswordError, setConfirmPasswordError] = useState('');
   const { signUp } = useAuth();
 
   const handleSignUp = async () => {
-    if (!email || !password || !confirmPassword) {
-      setError('Please fill in all fields');
+    // Clear previous errors
+    setError('');
+    setEmailError('');
+    setPasswordError('');
+    setConfirmPasswordError('');
+
+    // Validate email
+    const emailValidation = validateEmail(email);
+    if (!emailValidation.valid) {
+      setEmailError(emailValidation.error || '');
       return;
     }
 
-    if (password !== confirmPassword) {
-      setError('Passwords do not match');
+    // Validate password
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.valid) {
+      setPasswordError(passwordValidation.error || '');
       return;
     }
 
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters');
+    // Validate password match
+    const matchValidation = validatePasswordMatch(password, confirmPassword);
+    if (!matchValidation.valid) {
+      setConfirmPasswordError(matchValidation.error || '');
       return;
     }
 
     setLoading(true);
-    setError('');
 
     const { error } = await signUp(email, password);
 
     if (error) {
-      setError(error.message);
+      setError(error.message || 'Regjistrimi dështoi. Ju lutem provoni përsëri.');
       setLoading(false);
     } else {
       router.replace('/(tabs)');
@@ -64,32 +79,47 @@ export default function SignUpScreen() {
           <Image source={logo} style={styles.logo} resizeMode="contain" />
 
           <TextInput
-            style={styles.input}
+            style={[styles.input, emailError ? styles.inputError : null]}
             placeholder="Email"
             placeholderTextColor="#999"
             value={email}
-            onChangeText={setEmail}
+            onChangeText={(text) => {
+              setEmail(text);
+              setEmailError('');
+            }}
             autoCapitalize="none"
             keyboardType="email-address"
+            editable={!loading}
           />
+          {emailError ? <Text style={styles.errorText}>{emailError}</Text> : null}
 
           <TextInput
-            style={styles.input}
+            style={[styles.input, passwordError ? styles.inputError : null]}
             placeholder="Fjalëkalimi"
             placeholderTextColor="#999"
             value={password}
-            onChangeText={setPassword}
+            onChangeText={(text) => {
+              setPassword(text);
+              setPasswordError('');
+            }}
             secureTextEntry
+            editable={!loading}
           />
+          {passwordError ? <Text style={styles.errorText}>{passwordError}</Text> : null}
 
           <TextInput
-            style={styles.input}
+            style={[styles.input, confirmPasswordError ? styles.inputError : null]}
             placeholder="Konfirmo Fjalëkalimin"
             placeholderTextColor="#999"
             value={confirmPassword}
-            onChangeText={setConfirmPassword}
+            onChangeText={(text) => {
+              setConfirmPassword(text);
+              setConfirmPasswordError('');
+            }}
             secureTextEntry
+            editable={!loading}
           />
+          {confirmPasswordError ? <Text style={styles.errorText}>{confirmPasswordError}</Text> : null}
 
           {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
@@ -150,9 +180,13 @@ const styles = StyleSheet.create({
     borderColor: '#ddd',
     borderRadius: 8,
     paddingHorizontal: 16,
-    marginBottom: 16,
+    marginBottom: 8,
     fontSize: 16,
     backgroundColor: '#fff',
+  },
+  inputError: {
+    borderColor: '#E74C3C',
+    borderWidth: 2,
   },
   signUpButton: {
     height: 50,
@@ -160,7 +194,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 8,
+    marginTop: 16,
     width: '100%',
   },
   signUpButtonText: {
@@ -178,6 +212,7 @@ const styles = StyleSheet.create({
     color: '#E74C3C',
     fontSize: 14,
     marginBottom: 8,
-    textAlign: 'center',
+    textAlign: 'left',
+    width: '100%',
   },
 });
