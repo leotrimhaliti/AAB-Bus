@@ -1,6 +1,6 @@
 # 🚌 AAB Bus Tracking App
 
-**Private project - Real-time bus tracking for AAB University**
+**Real-time bus tracking for AAB University**
 
 ---
 
@@ -64,71 +64,6 @@ Cross-platform mobile application for **real-time GPS tracking** of university b
 - **Error Tracking:** Sentry React Native
 
 ---
-
-## 📦 Installation
-
-### Prerequisites
-- Node.js >= 18.0.0
-- npm >= 9.0.0
-- Expo CLI
-- iOS Simulator (macOS) or Android Emulator
-
-### Setup
-```bash
-npm install
-npm run dev
-```
-
----
-
-## 🚀 Usage
-
-### Running Tests
-
-```bash
-# Run all tests
-npm test
-
-# Run tests with coverage
-npm test -- --coverage
-
-# Run tests in watch mode
-npm test -- --watch
-
-# Run E2E tests (iOS)
-npm run test:e2e:ios
-
-# Run E2E tests (Android)
-npm run test:e2e:android
-
-# Build app for E2E testing
-npm run build:e2e:ios
-npm run build:e2e:android
-```
-
-### Type Checking
-
-```bash
-npm run typecheck
-```
-
-### Linting
-
-```bash
-npm run lint
-```
-
-### Building for Production
-
-```bash
-# Build for web
-npm run build:web
-
-# Build native apps (requires EAS)
-npx eas build --platform ios
-npx eas build --platform android
-```
-
 
 
 ## 🏗️ Project Structure
@@ -208,4 +143,4 @@ This project is developed for AAB University. All rights reserved.
 
 ## 📝 License
 
-Private project - AAB University. All rights reserved.
+AAB University. All rights reserved.

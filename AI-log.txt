@@ -1,8 +1,38 @@
-1. Tell me the command to make a react native and expo go project (typescript)
-2. Make me an app that tracks buses in real time
-3. How do i make the static lines where the bus has to go(fixed route)
-4. How do i connect to expo if im not in the same network
-5. Where can i find the google maps API key
-6.How do I cluster buses on the map if there are many in one area?
-7.How do I make the map zoom in and out
-8.How do I handle offline mode when the user loses network?
+Tell me the command to make a react native and expo go project (typescript)
+Make me an app that tracks buses in real time
+How do i make the static lines where the bus has to go(fixed route)
+How do i connect to expo if im not in the same network
+Where can i find the google maps API key
+How do I cluster buses on the map if there are many in one area?
+How do I make the map zoom in and out
+How do I handle offline mode when the user loses network?
+How do I implement user authentication with Supabase?
+How do I add a custom marker icon for the bus on the map?
+How do I calculate ETA (estimated time of arrival) for bus stops?
+How do I show the bus route as a polyline on the map?
+How do I add a refresh/pull-to-refresh feature?
+How do I handle API errors and retry failed requests?
+How do I add dark mode support to my app?
+How do I make the map follow the selected bus automatically?
+How do I add user profile screen with faculty API integration?
+How do I implement password reset functionality?
+How do I add form validation for login/signup?
+How do I integrate Sentry for crash reporting and monitoring?
+How do I preload images to prevent flickering?
+How do I use environment variables securely in Expo?
+How do I add unit tests with Jest and React Native Testing Library?
+How do I optimize map performance when rendering multiple markers?
+How do I add accessibility features (screen reader support)?
+How do I implement WebSocket for real-time bus location updates?
+How do I add a loading skeleton while data is fetching?
+How do I create a custom error boundary for React components?
+How do I add haptic feedback for button presses?
+How do I implement deep linking in Expo Router?
+How do I track user analytics and app usage?
+How do I add Session Replay to debug user issues?
+How do I optimize bundle size and reduce app load time?
+How do I implement biometric authentication (fingerprint/Face ID)?
+How do I add multiple language support (i18n)?
+How do I create animated transitions between screens?
+How do I implement geofencing to detect when user is near a stop?
+How do I add offline queue for actions when network is unavailable?

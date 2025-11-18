@@ -1,6 +1,6 @@
 import { Tabs } from 'expo-router';
 import { MapPin, User } from 'lucide-react-native';
-import { Text } from 'react-native';
+import { Text, Platform } from 'react-native';
 
 export default function TabLayout() {
   return (
@@ -27,6 +27,7 @@ export default function TabLayout() {
           fontWeight: '700',
           letterSpacing: 0.3,
         },
+        animation: 'shift',
       }}
     >
       <Tabs.Screen

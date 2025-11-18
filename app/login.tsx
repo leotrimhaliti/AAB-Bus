@@ -16,6 +16,7 @@ import { X } from 'lucide-react-native';
 import logo from '@/assets/images/logobus.png';
 import { useAuth } from '@/contexts/AuthContext';
 import { validateEmail, validatePassword } from '@/lib/validation';
+import * as Sentry from '@sentry/react-native';
 
 export default function LoginScreen() {
   const { signIn } = useAuth();
@@ -55,14 +56,33 @@ export default function LoginScreen() {
     setLoading(true);
 
     try {
+      Sentry.addBreadcrumb({
+        message: 'User attempting login',
+        category: 'auth',
+        level: 'info',
+        data: { email }
+      });
+
       const { error: loginError } = await signIn(email, password);
       if (loginError) {
         setError(loginError.message || 'Kredencialet janë të gabuara');
+        Sentry.captureMessage('Login failed', {
+          level: 'warning',
+          extra: { email, reason: loginError.message }
+        });
       } else {
+        Sentry.addBreadcrumb({
+          message: 'User logged in successfully',
+          category: 'auth',
+          level: 'info'
+        });
         router.replace('/'); // navigate to home on success
       }
     } catch (err) {
       setError('Diçka shkoi keq. Ju lutem provoni përsëri.');
+      Sentry.captureException(err, {
+        extra: { context: 'login', email }
+      });
       console.log('Login error:', err);
     } finally {
       setLoading(false);

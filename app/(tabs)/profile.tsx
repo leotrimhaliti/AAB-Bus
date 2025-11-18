@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, Button } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import { useAuth } from '@/contexts/AuthContext';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import * as Sentry from '@sentry/react-native';
 
 // import { supabase } from '@/lib/supabaseClient'; // uncomment if using Supabase
 
@@ -205,6 +206,17 @@ export default function ProfileScreen() {
         <MaterialCommunityIcons name="logout" size={20} color="#fff" />
         <Text style={styles.logoutText}>Dil nga llogaria</Text>
       </TouchableOpacity>
+
+      {/* Test Sentry Button */}
+      <View style={styles.testSection}>
+        <Text style={styles.testTitle}>Test Sentry</Text>
+        <Button 
+          title="Dërgo gabim test" 
+          onPress={() => {
+            Sentry.captureException(new Error('Test error nga profili!'));
+          }}
+        />
+      </View>
     </ScrollView>
   );
 }
@@ -308,6 +320,22 @@ const styles = StyleSheet.create({
     fontSize: 18, 
     marginLeft: 10,
     letterSpacing: 0.5,
+  },
+  testSection: {
+    marginHorizontal: 20,
+    marginTop: 20,
+    padding: 20,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  testTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#1a1a1a',
+    marginBottom: 12,
+    textAlign: 'center',
   },
   avatarContainer: {
     width: 140,
