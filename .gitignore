@@ -2,21 +2,6 @@
 
 # dependencies
 node_modules/
-
-# Expo
-.expo/
-dist/
-web-build/
-expo-env.d.ts
-.env
-
-
-# Native
-.kotlin/
-*.orig.*
-*.jks
-*.p8
-*.p12
 *.key
 *.mobileprovision
 
@@ -33,7 +18,8 @@ yarn-error.*
 *.pem
 
 # local env files
-.env*.local
+.env
+.env.local
 
 # typescript
 *.tsbuildinfo

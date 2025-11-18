@@ -24,7 +24,7 @@ export function useBusLocations({
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   const controllerRef = useRef<AbortController | null>(null);
   const pollingRef = useRef<number | null>(null);
-  
+
   const { isOffline } = useNetworkStatus();
 
   const { send, attach, readyState } = useWebSocket(enableWebSocket ? wsUrl ?? null : null);
@@ -54,13 +54,13 @@ export function useBusLocations({
         const resp = await fetchWithRetry(restUrl, { method: 'GET', signal }, { retries: 2 });
         const json = await resp.json();
         const parsedData = typeof json === 'string' ? JSON.parse(json) : json;
-        
+
         setData(parsedData);
         setLastUpdate(new Date());
-        
+
         // Save to cache for offline use
         await cache.saveBusLocations(parsedData);
-        
+
         // Sync to Supabase (insert new buses, update existing ones)
         // Don't let sync errors affect bus display
         syncBusLocationsToSupabase(parsedData).catch(err => {
@@ -68,7 +68,7 @@ export function useBusLocations({
         });
       } catch (err: any) {
         if (signal?.aborted) return;
-        
+
         // If fetch fails, try to load from cache
         const cached = await cache.getBusLocations();
         if (cached) {
@@ -92,7 +92,7 @@ export function useBusLocations({
         if (!payload) return;
         setData(payload);
         setError(null);
-        
+
         // Sync WebSocket data to Supabase as well (in background)
         syncBusLocationsToSupabase(payload).catch(err => {
           console.error('Background sync error:', err);

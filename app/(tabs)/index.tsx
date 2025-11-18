@@ -16,27 +16,27 @@ import { MapSkeleton } from '@/components/ui/Skeleton';
 import { ErrorState } from '@/components/ui/ErrorState';
 
 // Memoized Bus Marker Component for performance with pulsing animation
-const BusMarker = React.memo(({ 
-  busId, 
-  lat, 
-  lng, 
+const BusMarker = React.memo(({
+  busId,
+  lat,
+  lng,
   heading,
-  isSelected, 
-  onPress 
-}: { 
-  busId: string; 
-  lat: number; 
-  lng: number; 
+  isSelected,
+  onPress
+}: {
+  busId: string;
+  lat: number;
+  lng: number;
   heading?: string;
-  isSelected: boolean; 
+  isSelected: boolean;
   onPress: () => void;
 }) => {
   // Calculate rotation based on heading if available
   const rotation = heading ? parseFloat(heading) : 0;
-  
+
   // Track if image has loaded to prevent flickering - use ref to persist across renders
   const [imageLoaded, setImageLoaded] = useState(false);
-  
+
   // Pulsing animation for the bus logo
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
@@ -122,13 +122,17 @@ export default function BusTrackingScreen() {
   const [busProgress, setBusProgress] = useState<{ [key: string]: number }>({});
   const mapRef = useRef<MapView>(null);
 
-  const restUrl = process.env.EXPO_PUBLIC_BUS_API_URL + '/api/buss/locations' || 'https://testapieservice.aab-edu.net/api/buss/locations';
-  const wsUrl = null; // WebSocket URL if available
+  // Toast State
+  const [toastMsg, setToastMsg] = useState('');
+  const toastOpacity = useRef(new Animated.Value(0)).current;
 
-  const { 
-    data: busData, 
-    loading, 
-    error, 
+  const restUrl = process.env.EXPO_PUBLIC_BUS_API_URL!;
+  const wsUrl = null;
+
+  const {
+    data: busData,
+    loading,
+    error,
     refresh,
     isFromCache,
     lastUpdate,
@@ -140,22 +144,25 @@ export default function BusTrackingScreen() {
     enableWebSocket: false,
   });
 
-  // Fetch bus stops from database
   const { busStops, loading: busStopsLoading, error: busStopsError } = useBusStops();
-
-  // Use busStops from database instead of hardcoded coordinates
   const routeStops = useMemo(() => busStops, [busStops]);
 
-  // Memoize active buses calculation
   const activeBuses = useMemo(() => {
     if (!busData) return [];
     return Object.entries(busData).filter(([_, bus]) => bus.loc_valid === '1');
   }, [busData]);
 
-  // Only show loading on initial load, not on subsequent refreshes
+  const showToast = (message: string) => {
+    setToastMsg(message);
+    Animated.sequence([
+      Animated.timing(toastOpacity, { toValue: 1, duration: 300, useNativeDriver: true }),
+      Animated.delay(2500),
+      Animated.timing(toastOpacity, { toValue: 0, duration: 300, useNativeDriver: true })
+    ]).start();
+  };
+
   const isInitialLoading = (loading && !busData) || (busStopsLoading && busStops.length === 0);
 
-  // Debounced center map function
   const centerMapOnBuses = useCallback(() => {
     if (!busData || !mapRef.current) return;
     const buses = Object.values(busData).filter(bus => bus.loc_valid === '1');
@@ -172,37 +179,31 @@ export default function BusTrackingScreen() {
     });
   }, [busData]);
 
-  // Memoized marker press handler - now enables following mode
   const handleBusMarkerPress = useCallback((busId: string) => {
     setSelectedBus(busId);
     setIsFollowing(true);
+
+    // Show toast
+    showToast('Duke ndjekur autobusin...');
   }, []);
 
-  // Handle map press - deselect bus and stop following
   const handleMapPress = useCallback(() => {
     setSelectedBus(null);
     setIsFollowing(false);
   }, []);
 
-  // Track which direction the bus is going (outbound or return)
   const [busDirection, setBusDirection] = useState<{ [key: string]: 'outbound' | 'return' }>({});
 
-  // Find current stop based on progressive tracking (always moves forward)
   const currentStopIndex = useMemo(() => {
     if (!selectedBus || !busData || routeStops.length === 0) return -1;
-
     const bus = busData[selectedBus];
     if (!bus || bus.loc_valid !== '1') return -1;
-
     const busLat = parseFloat(bus.lat);
     const busLng = parseFloat(bus.lng);
     if (isNaN(busLat) || isNaN(busLng)) return -1;
 
-    // Get current progress for this bus, default to 0 (first stop)
     const currentProgress = busProgress[selectedBus] || 0;
     const currentDir = busDirection[selectedBus] || 'outbound';
-
-    // Find the closest stop to the bus
     let closestIndex = 0;
     let minDistance = Infinity;
 
@@ -211,7 +212,7 @@ export default function BusTrackingScreen() {
       const stopLng = stop.longitude;
       const distance = Math.sqrt(
         Math.pow(busLat - stopLat, 2) + Math.pow(busLng - stopLng, 2)
-      ) * 111000; // rough approximation in meters
+      ) * 111000;
       if (distance < minDistance) {
         minDistance = distance;
         closestIndex = index;
@@ -220,39 +221,31 @@ export default function BusTrackingScreen() {
 
     let newProgress = currentProgress;
     let newDirection = currentDir;
-    
-    // Check if we've reached Lakrishte (index 5) - this triggers return journey
+
     if (closestIndex === 5 && minDistance < 150 && currentDir === 'outbound') {
       newDirection = 'return';
     }
-    
-    // Special handling for Kolegji AAB (first and last stops are very close)
+
     const isNearKolegjiAAB = minDistance < 200 && (closestIndex === 0 || closestIndex === routeStops.length - 1);
-    
+
     if (isNearKolegjiAAB) {
       if (currentDir === 'return') {
-        // On return journey, should be at Kthim
         newProgress = routeStops.length - 1;
-        // Check if we should restart (bus left and came back)
         if (currentProgress === routeStops.length - 1 && minDistance > 300) {
           newProgress = 0;
           newDirection = 'outbound';
         }
       } else {
-        // On outbound journey, should be at Nisje
         newProgress = 0;
       }
     }
-    // Normal progression logic
     else if (closestIndex > currentProgress && minDistance < 200) {
       newProgress = closestIndex;
-    } 
+    }
     else if (minDistance < 100 && closestIndex >= currentProgress) {
       newProgress = closestIndex;
     }
-    // else: keep current progress
 
-    // Update progress and direction state
     if (newProgress !== currentProgress || newDirection !== currentDir) {
       setBusProgress(prev => ({ ...prev, [selectedBus]: newProgress }));
       setBusDirection(prev => ({ ...prev, [selectedBus]: newDirection }));
@@ -261,27 +254,17 @@ export default function BusTrackingScreen() {
     return newProgress;
   }, [selectedBus, busData, routeStops, busProgress, busDirection]);
 
-  // Follow selected bus when its position updates
   useEffect(() => {
     if (!isFollowing || !selectedBus || !busData || !mapRef.current) return;
-
     const bus = busData[selectedBus];
     if (!bus || bus.loc_valid !== '1') return;
-
     const lat = parseFloat(bus.lat);
     const lng = parseFloat(bus.lng);
     if (isNaN(lat) || isNaN(lng)) return;
 
-    // Animate camera to follow the bus smoothly
     mapRef.current.animateCamera(
-      {
-        center: {
-          latitude: lat,
-          longitude: lng,
-        },
-        zoom: 16, // Closer zoom when following
-      },
-      { duration: 2000 } // 2 second smooth camera movement
+      { center: { latitude: lat, longitude: lng }, zoom: 16 },
+      { duration: 2000 }
     );
   }, [busData, selectedBus, isFollowing]);
 
@@ -297,11 +280,7 @@ export default function BusTrackingScreen() {
     return (
       <ErrorState
         title="Gabim në Ngarkim"
-        message={
-          error && !busData
-            ? 'Nuk u mund të ngarkohen të dhënat e autobusëve. Kontrolloni lidhjen me internet dhe provoni përsëri.'
-            : 'Nuk u mund të ngarkohen stacionet e autobusit. Kontrolloni lidhjen me internet dhe provoni përsëri.'
-        }
+        message={error && !busData ? 'Nuk u mund të ngarkohen të dhënat.' : 'Nuk u mund të ngarkohen stacionet.'}
         onRetry={refresh}
       />
     );
@@ -309,6 +288,17 @@ export default function BusTrackingScreen() {
 
   return (
     <View style={styles.container}>
+      {/* Classic Header */}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Gjurmimi Live</Text>
+        {isOffline && (
+          <View style={styles.offlineBadge}>
+            <Text style={styles.offlineText}>Offline</Text>
+          </View>
+        )}
+      </View>
+
+      {/* Map Section (Top 60%) */}
       <View style={styles.mapContainer}>
         <MapView
           ref={mapRef}
@@ -318,11 +308,11 @@ export default function BusTrackingScreen() {
           initialRegion={{
             latitude: 42.638,
             longitude: 21.114,
-            latitudeDelta: 0.1,  // Increased to see more area
+            latitudeDelta: 0.1,
             longitudeDelta: 0.1,
           }}
           showsUserLocation
-          mapType="hybrid"
+          mapType="standard"
           showsMyLocationButton={false}
           onPress={handleMapPress}
         >
@@ -349,47 +339,24 @@ export default function BusTrackingScreen() {
           ))}
         </MapView>
 
-        {/* Following indicator badge */}
-        {isFollowing && selectedBus && (
-          <View style={styles.followingBadge}>
-            <Text style={styles.followingText}>
-              📍 Duke ndjekur Autobusin e Selektuar
-            </Text>
-            <Text style={styles.followingHint}>Kliko hartën për të ndaluar</Text>
-          </View>
-        )}
-
-        <TouchableOpacity 
-          style={styles.centerButton} 
+        <TouchableOpacity
+          style={styles.centerButton}
           onPress={centerMapOnBuses}
-          accessible={true}
-          accessibilityLabel="Qendro në autobusat"
-          accessibilityHint="Qendron hartën në pozicionin e të gjithë autobusave aktiv"
-          accessibilityRole="button"
         >
           <Navigation size={20} color="#c62829" />
         </TouchableOpacity>
       </View>
 
-      {selectedBus && (
-        <View style={styles.routeInfoContainer}>
-          {isOffline && (
-            <View style={styles.offlineBanner}>
-              <Text style={styles.offlineText}>
-                ⚠️ Jeni offline
-                {isFromCache && lastUpdate && 
-                  ` • Të dhënat nga ${new Date(lastUpdate).toLocaleTimeString('sq-AL')}`
-                }
-              </Text>
-            </View>
-          )}
-          
-          <Text style={styles.routeTitle}>Stacionet e Autobusit</Text>
-          <ScrollView 
-            style={styles.stopsScrollView} 
-            showsVerticalScrollIndicator={false}
-            testID="stops-scroll-view"
-          >
+      {/* List Section (Bottom 40%) */}
+      <View style={styles.listContainer}>
+        <View style={styles.listHeader}>
+          <Text style={styles.listTitle}>
+            {selectedBus ? 'Stacionet e Autobusit' : 'Zgjidhni një autobus'}
+          </Text>
+        </View>
+
+        {selectedBus ? (
+          <ScrollView style={styles.stopsList} showsVerticalScrollIndicator={false}>
             {routeStops.map((stop, index) => {
               const isPassed = currentStopIndex !== -1 && currentStopIndex > index;
               const isCurrent = currentStopIndex !== -1 && currentStopIndex === index;
@@ -422,7 +389,6 @@ export default function BusTrackingScreen() {
                       isCurrent && styles.stopNameCurrent
                     ]}>
                       {stop.name}
-                      {isCurrent && ' 🚌'}
                     </Text>
                     {isCurrent && (
                       <Text style={styles.currentStopLabel}>Pozicioni aktual</Text>
@@ -432,8 +398,24 @@ export default function BusTrackingScreen() {
               );
             })}
           </ScrollView>
-        </View>
-      )}
+        ) : (
+          <View style={styles.emptyState}>
+            <Image
+              source={require('@/assets/images/aab-buss.png')}
+              style={{ width: 60, height: 60, opacity: 0.3, marginBottom: 10 }}
+              resizeMode="contain"
+            />
+            <Text style={styles.emptyStateText}>
+              Autobusët aktivë shfaqen në hartë.
+            </Text>
+          </View>
+        )}
+      </View>
+
+      {/* Toast Notification */}
+      <Animated.View style={[styles.toast, { opacity: toastOpacity }]} pointerEvents="none">
+        <Text style={styles.toastText}>{toastMsg}</Text>
+      </Animated.View>
     </View>
   );
 }
@@ -448,69 +430,191 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#f8f9fa',
-    padding: 20,
   },
-  loadingText: {
-    marginTop: 16,
-    fontSize: 16,
-    color: '#666',
-  },
-  errorText: {
-    fontSize: 16,
-    color: '#c62829',
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-  retryButton: {
-    backgroundColor: '#c62829',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 8,
-  },
-  retryButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  headerModern: {
-    backgroundColor: 'rgba(198,40,41,0.95)',
-    paddingTop: 60,
+  header: {
+    paddingTop: 50,
     paddingBottom: 15,
     paddingHorizontal: 20,
+    backgroundColor: '#c62829',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+    zIndex: 10,
   },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  backButtonText: {
+  headerTitle: {
     color: '#fff',
-    fontSize: 24,
+    fontSize: 20,
+    fontWeight: '700',
+  },
+  offlineBadge: {
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+  },
+  offlineText: {
+    color: '#fff',
+    fontSize: 12,
     fontWeight: '600',
   },
-  refreshButton: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  refreshButtonActive: {
-    backgroundColor: 'rgba(255,255,255,0.3)',
-  },
   mapContainer: {
-    flex: 2,
+    flex: 3, // Takes up 60% roughly
     position: 'relative',
   },
   map: {
     flex: 1,
   },
+  centerButton: {
+    position: 'absolute',
+    bottom: 20,
+    right: 20,
+    backgroundColor: '#fff',
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  listContainer: {
+    flex: 2, // Takes up 40% roughly
+    backgroundColor: '#fff',
+    borderTopWidth: 1,
+    borderTopColor: '#e5e5e5',
+  },
+  listHeader: {
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+    backgroundColor: '#f9fafb',
+  },
+  listTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#374151',
+  },
+  stopsList: {
+    padding: 16,
+  },
+  stopItem: {
+    flexDirection: 'row',
+    marginBottom: 0,
+    minHeight: 50,
+  },
+  stopIndicatorContainer: {
+    width: 24,
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  stopCircle: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#fff',
+    borderWidth: 2,
+    borderColor: '#d1d5db',
+    zIndex: 2,
+  },
+  stopCircleStart: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#10b981',
+    zIndex: 2,
+  },
+  stopCircleEnd: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#c62829',
+    zIndex: 2,
+  },
+  stopCirclePassed: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#e5e5e5',
+    zIndex: 2,
+  },
+  stopCircleCurrent: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: '#c62829',
+    borderWidth: 2,
+    borderColor: '#fee2e2',
+    zIndex: 2,
+    marginLeft: -2,
+  },
+  stopLine: {
+    position: 'absolute',
+    top: 10,
+    bottom: -10,
+    width: 2,
+    backgroundColor: '#e5e5e5',
+    zIndex: 1,
+  },
+  stopLinePassed: {
+    backgroundColor: '#e5e5e5',
+  },
+  stopContent: {
+    flex: 1,
+    paddingBottom: 16,
+  },
+  stopName: {
+    fontSize: 14,
+    color: '#374151',
+    fontWeight: '500',
+  },
+  stopNamePassed: {
+    color: '#9ca3af',
+  },
+  stopNameCurrent: {
+    color: '#111827',
+    fontWeight: '700',
+  },
+  currentStopLabel: {
+    fontSize: 11,
+    color: '#c62829',
+    marginTop: 2,
+    fontWeight: '600',
+  },
+  emptyState: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  emptyStateText: {
+    color: '#9ca3af',
+    fontSize: 14,
+  },
+  // Toast Styles
+  toast: {
+    position: 'absolute',
+    bottom: 40,
+    alignSelf: 'center',
+    backgroundColor: 'rgba(0,0,0,0.8)',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
+    zIndex: 100,
+  },
+  toastText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  // Marker Styles
   markerContainer: {
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -526,167 +630,5 @@ const styles = StyleSheet.create({
   },
   markerContainerSelected: {
     transform: [{ scale: 1.1 }],
-  },
-  centerButton: {
-    position: 'absolute',
-    top: 20,
-    right: 20,
-    backgroundColor: '#fff',
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  routeInfoContainer: {
-    flex: 1,
-    backgroundColor: '#fff',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    marginTop: -20,
-    paddingTop: 20,
-    paddingHorizontal: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 10,
-  },
-  routeTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#1a1a1a',
-    marginBottom: 16,
-  },
-  stopsScrollView: {
-    flex: 1,
-  },
-  stopItem: {
-    flexDirection: 'row',
-    marginBottom: 4,
-  },
-  stopIndicatorContainer: {
-    width: 30,
-    alignItems: 'center',
-    position: 'relative',
-  },
-  stopCircle: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: '#fff',
-    borderWidth: 3,
-    borderColor: '#ffa726',
-  },
-  stopCircleStart: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: '#4caf50',
-  },
-  stopCircleEnd: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: '#c62829',
-  },
-  stopCirclePassed: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: '#9e9e9e',
-    borderWidth: 2,
-    borderColor: '#757575',
-  },
-  stopCircleCurrent: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    backgroundColor: '#c62829',
-    borderWidth: 3,
-    borderColor: '#fff',
-    shadowColor: '#c62829',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.5,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  stopLine: {
-    position: 'absolute',
-    top: 12,
-    width: 2,
-    height: 40,
-    backgroundColor: '#ffa726',
-  },
-  stopLinePassed: {
-    backgroundColor: '#9e9e9e',
-  },
-  stopContent: {
-    flex: 1,
-    paddingBottom: 20,
-  },
-  stopName: {
-    fontSize: 14,
-    color: '#1a1a1a',
-    fontWeight: '500',
-    marginBottom: 2,
-  },
-  stopNamePassed: {
-    color: '#9e9e9e',
-    textDecorationLine: 'line-through',
-  },
-  stopNameCurrent: {
-    color: '#c62829',
-    fontWeight: '700',
-    fontSize: 15,
-  },
-  currentStopLabel: {
-    fontSize: 11,
-    color: '#c62829',
-    fontWeight: '600',
-    marginTop: 2,
-  },
-  offlineBanner: {
-    backgroundColor: '#ff9800',
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    alignItems: 'center',
-    marginBottom: 16,
-    borderRadius: 8,
-  },
-  offlineText: {
-    color: '#fff',
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  followingBadge: {
-    position: 'absolute',
-    top: 20,
-    left: 20,
-    backgroundColor: 'rgba(198, 40, 41, 0.95)',
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  followingText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '700',
-    marginBottom: 2,
-  },
-  followingHint: {
-    color: 'rgba(255, 255, 255, 0.85)',
-    fontSize: 11,
-    fontWeight: '500',
   },
 });
