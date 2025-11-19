@@ -9,12 +9,12 @@ export default function TabLayout() {
         headerShown: false,
         tabBarActiveTintColor: '#c62829',
         tabBarInactiveTintColor: '#94a3b8',
-        tabBarStyle: { 
-          borderTopWidth: 1, 
+        tabBarStyle: {
+          borderTopWidth: 1,
           borderTopColor: '#e2e8f0',
           backgroundColor: '#ffffff',
-          height: 60,
-          paddingBottom: 8,
+          height: 90,
+          paddingBottom: 30,
           paddingTop: 8,
           shadowColor: '#000',
           shadowOffset: { width: 0, height: -2 },

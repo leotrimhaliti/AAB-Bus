@@ -121,6 +121,7 @@ export default function BusTrackingScreen() {
   const [isFollowing, setIsFollowing] = useState(false);
   const [busProgress, setBusProgress] = useState<{ [key: string]: number }>({});
   const mapRef = useRef<MapView>(null);
+  const lastMarkerPress = useRef<number>(0);
 
   // Toast State
   const [toastMsg, setToastMsg] = useState('');
@@ -180,6 +181,9 @@ export default function BusTrackingScreen() {
   }, [busData]);
 
   const handleBusMarkerPress = useCallback((busId: string) => {
+    lastMarkerPress.current = Date.now();
+    console.log('Bus marker pressed:', busId);
+
     setSelectedBus(busId);
     setIsFollowing(true);
 
@@ -188,6 +192,13 @@ export default function BusTrackingScreen() {
   }, []);
 
   const handleMapPress = useCallback(() => {
+    const timeSinceMarkerPress = Date.now() - lastMarkerPress.current;
+    if (timeSinceMarkerPress < 500) {
+      console.log(`Ignoring map press (${timeSinceMarkerPress}ms after marker press)`);
+      return;
+    }
+
+    console.log('Map background pressed - clearing selection');
     setSelectedBus(null);
     setIsFollowing(false);
   }, []);
@@ -290,7 +301,7 @@ export default function BusTrackingScreen() {
     <View style={styles.container}>
       {/* Classic Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Gjurmimi Live</Text>
+        <Text style={styles.headerTitle}> </Text>
         {isOffline && (
           <View style={styles.offlineBadge}>
             <Text style={styles.offlineText}>Offline</Text>
@@ -448,7 +459,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     color: '#fff',
-    fontSize: 20,
+    fontSize: 1,
     fontWeight: '700',
   },
   offlineBadge: {
