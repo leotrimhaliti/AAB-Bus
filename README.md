@@ -76,7 +76,6 @@ aab-bus/
 │   │   ├── orari.tsx        # Schedule screen
 │   │   └── profile.tsx      # User profile
 │   ├── login.tsx            # Login screen
-│   ├── signup.tsx           # Signup screen
 │   └── _layout.tsx          # Root layout
 ├── components/              # Reusable components
 │   ├── ui/                  # UI components
