@@ -83,15 +83,27 @@ export default function ProfileScreen() {
   const fetchDetails = async () => {
     setLoading(true);
     setError(null);
-    const token = await SecureStore.getItemAsync('access_token');
-    if (!token) {
-      setLoading(false);
-      setError('Nuk ka token të aksesit.');
-      return;
-    }
+
     try {
-      const response = await fetch(
-        `${process.env.EXPO_PUBLIC_FACULTY_API_URL || 'https://testapieservice.uniaab.com'}/api/profile/details`,
+      console.log('Fetching profile details...');
+      const token = await SecureStore.getItemAsync('access_token');
+
+      if (!token) {
+        console.log('No access token found');
+        setLoading(false);
+        setError('Nuk ka token të aksesit.');
+        return;
+      }
+
+      console.log('Token found, making request to:', `${process.env.EXPO_PUBLIC_API_URL}/api/profile/details`);
+
+      // Create a timeout promise
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Request timed out')), 10000);
+      });
+
+      const fetchPromise = fetch(
+        `${process.env.EXPO_PUBLIC_API_URL}/api/profile/details`,
         {
           method: 'GET',
           headers: {
@@ -100,11 +112,26 @@ export default function ProfileScreen() {
           },
         }
       );
+
+      // Race between fetch and timeout
+      const response = await Promise.race([fetchPromise, timeoutPromise]) as Response;
+
+      console.log('Response status:', response.status);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.log('Error response:', errorText);
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
       const data = await response.json();
-      if (response.ok) setDetails(data);
-      else setError('Nuk u mund të ngarkohen të dhënat e profilit.');
-    } catch (err) {
-      setError('Gabim gjatë ngarkimit të të dhënave të profilit.');
+      console.log('Profile data received:', data ? 'Yes' : 'No');
+      setDetails(data);
+    } catch (err: any) {
+      console.error('Profile fetch error:', err);
+      setError(err.message === 'Request timed out'
+        ? 'Kërkesa vonoi shumë. Ju lutem kontrolloni internetin.'
+        : 'Gabim gjatë ngarkimit të të dhënave të profilit.');
     } finally {
       setLoading(false);
     }
@@ -148,15 +175,15 @@ export default function ProfileScreen() {
   }
 
   return (
-    <ScrollView 
-      style={styles.container} 
+    <ScrollView
+      style={styles.container}
       contentContainerStyle={styles.contentContainer}
       testID="profile-scroll-view"
     >
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Profili im</Text>
       </View>
-      
+
       <View style={styles.profileCard}>
         <View style={styles.avatarContainer}>
           <Image
@@ -170,30 +197,30 @@ export default function ProfileScreen() {
       </View>
 
       <View style={styles.detailsSection}>
-        <InfoItem 
-          iconName="email-outline" 
-          label="Email Adresa" 
+        <InfoItem
+          iconName="email-outline"
+          label="Email Adresa"
           value={details.adresaf || session?.user?.email || 'Nuk ka të dhëna'}
           testID="profile-email-value"
         />
 
-        <InfoItem 
-          iconName="calendar-account-outline" 
-          label="Datëlindja" 
+        <InfoItem
+          iconName="calendar-account-outline"
+          label="Datëlindja"
           value={details.datelindja || 'Nuk ka të dhëna'}
           testID="profile-birthdate-value"
         />
-        
-        <InfoItem 
-          iconName="account-group-outline" 
-          label="Grupi" 
+
+        <InfoItem
+          iconName="account-group-outline"
+          label="Grupi"
           value={details.group || 'Nuk ka të dhëna'}
           testID="profile-group-value"
         />
       </View>
-      
-      <TouchableOpacity 
-        style={styles.logoutButton} 
+
+      <TouchableOpacity
+        style={styles.logoutButton}
         onPress={handleSignOut}
         accessible={true}
         accessibilityLabel="Dilni nga llogaria"
@@ -207,8 +234,8 @@ export default function ProfileScreen() {
       {/* Test Sentry Button */}
       <View style={styles.testSection}>
         <Text style={styles.testTitle}>Test Sentry</Text>
-        <Button 
-          title="Dërgo gabim test" 
+        <Button
+          title="Dërgo gabim test"
           onPress={() => {
             Sentry.captureException(new Error('Test error nga profili!'));
           }}
@@ -219,11 +246,11 @@ export default function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    backgroundColor: '#f5f7fa' 
+  container: {
+    flex: 1,
+    backgroundColor: '#f5f7fa'
   },
-  contentContainer: { 
+  contentContainer: {
     paddingBottom: 40,
   },
   header: {
@@ -275,9 +302,9 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     elevation: 3,
   },
-  faculty: { 
-    fontSize: 14, 
-    color: '#6b7280', 
+  faculty: {
+    fontSize: 14,
+    color: '#6b7280',
     fontWeight: '500',
     textAlign: 'center',
     paddingHorizontal: 12,
@@ -303,10 +330,10 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 4,
   },
-  logoutText: { 
-    color: '#ffffff', 
-    fontWeight: '600', 
-    fontSize: 16, 
+  logoutText: {
+    color: '#ffffff',
+    fontWeight: '600',
+    fontSize: 16,
     marginLeft: 8,
   },
   testSection: {

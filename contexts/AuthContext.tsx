@@ -70,7 +70,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const token = await SecureStore.getItemAsync('access_token');
     if (token) {
       try {
-        const response = await fetch('https://testapieservice.uniaab.com/api/profile/details', {
+        const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/api/profile/details`, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -100,51 +100,51 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // --- combined sign in
   const signIn = async (email: string, password: string) => {
-  let error: any = null;
-  let facultyLoginOk = false;
+    let error: any = null;
+    let facultyLoginOk = false;
 
-  // 1️⃣ Supabase login
-  try {
-    const { data, error: supaError } = await supabase.auth.signInWithPassword({ email, password });
-    if (!supaError && data.session) {
-      setSession(data.session);
-      await fetchProfile(data.session);
-    } else if (supaError) {
-      console.log('⚠️ Supabase login failed:', supaError.message);
-      error = { message: 'Email ose fjalëkalimi është i gabuar' };
+    // 1️⃣ Supabase login
+    try {
+      const { data, error: supaError } = await supabase.auth.signInWithPassword({ email, password });
+      if (!supaError && data.session) {
+        setSession(data.session);
+        await fetchProfile(data.session);
+      } else if (supaError) {
+        console.log('⚠️ Supabase login failed:', supaError.message);
+        error = { message: 'Email ose fjalëkalimi është i gabuar' };
+      }
+    } catch (err) {
+      console.log('🔥 Supabase login exception:', err);
+      error = { message: 'Lidhja me serverin dështoi. Kontrolloni internetin.' };
     }
-  } catch (err) {
-    console.log('🔥 Supabase login exception:', err);
-    error = { message: 'Lidhja me serverin dështoi. Kontrolloni internetin.' };
-  }
 
-  // 2️⃣ Faculty API login
-  try {
-    const body = `grant_type=password&username=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`;
-    const response = await fetch('https://testapieservice.uniaab.com/Token', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body,
-    });
+    // 2️⃣ Faculty API login
+    try {
+      const body = `grant_type=password&username=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`;
+      const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/Token`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body,
+      });
 
-    const apiData = await response.json();
-    const token = apiData.access_token || apiData.access_ttoken;
-    if (response.ok && token) {
-      facultyLoginOk = true;
-      await SecureStore.setItemAsync('access_token', token);
-      await fetchProfile(session);
-    } else {
-      console.log('❌ Faculty API login failed:', apiData.error_description);
+      const apiData = await response.json();
+      const token = apiData.access_token || apiData.access_ttoken;
+      if (response.ok && token) {
+        facultyLoginOk = true;
+        await SecureStore.setItemAsync('access_token', token);
+        await fetchProfile(session);
+      } else {
+        console.log('❌ Faculty API login failed:', apiData.error_description);
+      }
+    } catch (err) {
+      console.log('🔥 Faculty API fetch error:', err);
     }
-  } catch (err) {
-    console.log('🔥 Faculty API fetch error:', err);
-  }
 
-  // ✅ if faculty login works, ignore Supabase error
-  if (facultyLoginOk) error = null;
+    // ✅ if faculty login works, ignore Supabase error
+    if (facultyLoginOk) error = null;
 
-  return { error };
-};
+    return { error };
+  };
 
 
   const signUp = async (email: string, password: string) => {
@@ -153,11 +153,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = async () => {
-  await supabase.auth.signOut();
-  setProfile(null);
-  setSession(null);
-  await SecureStore.deleteItemAsync('access_token');
-};
+    await supabase.auth.signOut();
+    setProfile(null);
+    setSession(null);
+    await SecureStore.deleteItemAsync('access_token');
+  };
 
 
   return (
