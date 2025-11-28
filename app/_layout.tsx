@@ -1,11 +1,12 @@
-import { useEffect } from 'react';
-import { Stack, router } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import { useFrameworkReady } from '@/hooks/useFrameworkReady';
-import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import SplashScreen from '@/components/SplashScreen';
+import { AuthProvider, useAuth } from '@/contexts/AuthContext';
+import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 import { preloadImages } from '@/utils/imagePreloader';
 import * as Sentry from '@sentry/react-native';
+import { Stack, router } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
+import { useEffect, useState } from 'react';
 
 Sentry.init({
   dsn: 'https://0b16d05d1972f12c3418c8e788977d5d@o4510383110553600.ingest.de.sentry.io/4510383112061008',
@@ -44,27 +45,27 @@ function RootNavigator() {
   }, [session, loading]);
 
   return (
-    <Stack 
-      screenOptions={{ 
+    <Stack
+      screenOptions={{
         headerShown: false,
         animation: 'fade_from_bottom',
         animationDuration: 300,
       }}
     >
-      <Stack.Screen 
-        name="login" 
+      <Stack.Screen
+        name="login"
         options={{
           animation: 'fade',
         }}
       />
-      <Stack.Screen 
-        name="signup" 
+      <Stack.Screen
+        name="signup"
         options={{
           animation: 'slide_from_right',
         }}
       />
-      <Stack.Screen 
-        name="(tabs)" 
+      <Stack.Screen
+        name="(tabs)"
         options={{
           animation: 'fade',
         }}
@@ -74,6 +75,7 @@ function RootNavigator() {
 }
 
 export default Sentry.wrap(function RootLayout() {
+  const [showSplash, setShowSplash] = useState(true);
   useFrameworkReady();
 
   return (
@@ -81,6 +83,7 @@ export default Sentry.wrap(function RootLayout() {
       <AuthProvider>
         <RootNavigator />
         <StatusBar style="auto" />
+        {showSplash && <SplashScreen onFinish={() => setShowSplash(false)} />}
       </AuthProvider>
     </ErrorBoundary>
   );

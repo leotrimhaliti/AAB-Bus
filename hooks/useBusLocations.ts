@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { fetchWithRetry } from '../lib/fetchWithRetry';
-import { useWebSocket } from './useWebSocket';
-import { BusData } from '../types/bus';
-import { cache } from '../lib/cache';
-import { useNetworkStatus } from './useNetworkStatus';
 import { syncBusLocationsToSupabase } from '../lib/busSync';
+import { cache } from '../lib/cache';
+import { fetchWithRetry } from '../lib/fetchWithRetry';
+import { BusData } from '../types/bus';
+import { useNetworkStatus } from './useNetworkStatus';
+import { useWebSocket } from './useWebSocket';
 
 export function useBusLocations({
   restUrl,
@@ -24,6 +24,21 @@ export function useBusLocations({
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   const controllerRef = useRef<AbortController | null>(null);
   const pollingRef = useRef<number | null>(null);
+  const initialLoadDone = useRef(false);
+
+  // Load cached data immediately on mount for instant display
+  useEffect(() => {
+    if (!initialLoadDone.current) {
+      initialLoadDone.current = true;
+      cache.getBusLocations().then(cached => {
+        if (cached) {
+          setData(cached.data);
+          setLastUpdate(cached.lastUpdate);
+          setIsFromCache(true);
+        }
+      });
+    }
+  }, []);
 
   const { isOffline } = useNetworkStatus();
 

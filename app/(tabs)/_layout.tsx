@@ -1,8 +1,14 @@
 import { Tabs } from 'expo-router';
 import { MapPin, User } from 'lucide-react-native';
-import { Text, Platform } from 'react-native';
+import { Text } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function TabLayout() {
+  const insets = useSafeAreaInsets();
+  
+  // Calculate responsive tab bar height based on safe area
+  const tabBarHeight = 60 + insets.bottom;
+  
   return (
     <Tabs
       screenOptions={{
@@ -13,8 +19,8 @@ export default function TabLayout() {
           borderTopWidth: 1,
           borderTopColor: '#e2e8f0',
           backgroundColor: '#ffffff',
-          height: 90,
-          paddingBottom: 30,
+          height: tabBarHeight,
+          paddingBottom: insets.bottom,
           paddingTop: 8,
           shadowColor: '#000',
           shadowOffset: { width: 0, height: -2 },

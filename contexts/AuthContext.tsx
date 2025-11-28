@@ -1,7 +1,7 @@
-import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
-import { Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
+import { Session } from '@supabase/supabase-js';
 import * as SecureStore from 'expo-secure-store';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 
 interface UserProfile {
   name?: string;
@@ -31,6 +31,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // --- listen for supabase session changes
   useEffect(() => {
+    // Handle case where supabase is not initialized
+    if (!supabase) {
+      console.warn('⚠️ Supabase not available, skipping auth');
+      setLoading(false);
+      return;
+    }
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setLoading(false);
@@ -48,7 +55,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // --- fetch profile from supabase AND faculty API
   const fetchProfile = async (session: Session | null) => {
     // --- supabase profile
-    if (session) {
+    if (session && supabase) {
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -56,11 +63,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .single();
 
       if (data) {
+        const profileData = data as { emri?: string; mbiemri?: string; email?: string };
         setProfile(prev => ({
           ...prev,
-          name: data.emri,
-          surname: data.mbiemri,
-          email: data.email,
+          name: profileData.emri,
+          surname: profileData.mbiemri,
+          email: profileData.email,
         }));
       }
       if (error) console.log('Supabase profile fetch error:', error);
@@ -104,18 +112,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     let facultyLoginOk = false;
 
     // 1️⃣ Supabase login
-    try {
-      const { data, error: supaError } = await supabase.auth.signInWithPassword({ email, password });
-      if (!supaError && data.session) {
-        setSession(data.session);
-        await fetchProfile(data.session);
-      } else if (supaError) {
-        console.log('⚠️ Supabase login failed:', supaError.message);
-        error = { message: 'Email ose fjalëkalimi është i gabuar' };
+    if (supabase) {
+      try {
+        const { data, error: supaError } = await supabase.auth.signInWithPassword({ email, password });
+        if (!supaError && data.session) {
+          setSession(data.session);
+          await fetchProfile(data.session);
+        } else if (supaError) {
+          console.log('⚠️ Supabase login failed:', supaError.message);
+          error = { message: 'Email ose fjalëkalimi është i gabuar' };
+        }
+      } catch (err) {
+        console.log('🔥 Supabase login exception:', err);
+        error = { message: 'Lidhja me serverin dështoi. Kontrolloni internetin.' };
       }
-    } catch (err) {
-      console.log('🔥 Supabase login exception:', err);
-      error = { message: 'Lidhja me serverin dështoi. Kontrolloni internetin.' };
     }
 
     // 2️⃣ Faculty API login
@@ -148,12 +158,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 
   const signUp = async (email: string, password: string) => {
+    if (!supabase) {
+      return { error: { message: 'Supabase not available' } };
+    }
     const { error } = await supabase.auth.signUp({ email, password });
     return { error };
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    if (supabase) {
+      await supabase.auth.signOut();
+    }
     setProfile(null);
     setSession(null);
     await SecureStore.deleteItemAsync('access_token');

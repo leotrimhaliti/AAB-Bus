@@ -1,22 +1,22 @@
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-  Image,
-  Modal,
-} from 'react-native';
-import { router } from 'expo-router';
-import { X } from 'lucide-react-native';
 import logo from '@/assets/images/logobus.png';
 import { useAuth } from '@/contexts/AuthContext';
 import { validateEmail, validatePassword } from '@/lib/validation';
 import * as Sentry from '@sentry/react-native';
+import { router } from 'expo-router';
+import { X } from 'lucide-react-native';
+import React, { useState } from 'react';
+import {
+  ActivityIndicator,
+  Image,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
 export default function LoginScreen() {
   const { signIn } = useAuth();
@@ -91,14 +91,14 @@ export default function LoginScreen() {
 
   const handlePasswordReset = async () => {
     setResetError('');
-    
+
     if (!phoneNumber || !contractId) {
       setResetError('Ju lutem plotësoni të gjitha fushat');
       return;
     }
 
     setResetLoading(true);
-    
+
     try {
       // Simulate API call - replace with actual password reset logic
       await new Promise(resolve => setTimeout(resolve, 1500));
@@ -151,7 +151,9 @@ export default function LoginScreen() {
               setPassword(text);
               setPasswordError('');
             }}
-            secureTextEntry
+            secureTextEntry={true}
+            autoCapitalize="none"
+            autoCorrect={false}
             editable={!loading}
             accessible={true}
             accessibilityLabel="Fjalëkalimi"
@@ -177,7 +179,7 @@ export default function LoginScreen() {
             )}
           </TouchableOpacity>
 
-          <TouchableOpacity 
+          <TouchableOpacity
             onPress={() => setShowForgotPassword(true)}
             accessible={true}
             accessibilityLabel="Keni harruar fjalëkalimin"
@@ -201,7 +203,7 @@ export default function LoginScreen() {
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Keni harruar fjalëkalimin?!</Text>
-              <TouchableOpacity 
+              <TouchableOpacity
                 onPress={() => {
                   setShowForgotPassword(false);
                   setResetError('');
@@ -271,22 +273,22 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    backgroundColor: '#f5f7fa' 
+  container: {
+    flex: 1,
+    backgroundColor: '#ffffffff'
   },
-  content: { 
-    flex: 1, 
-    justifyContent: 'center', 
-    paddingHorizontal: 32 
+  content: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingHorizontal: 32
   },
-  formContainer: { 
-    alignItems: 'center' 
+  formContainer: {
+    alignItems: 'center'
   },
-  logo: { 
-    width: 180, 
-    height: 180, 
-    marginBottom: 32 
+  logo: {
+    width: 180,
+    height: 180,
+    marginBottom: 32
   },
   input: {
     width: '100%',
@@ -298,6 +300,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     fontSize: 16,
     backgroundColor: '#fff',
+    color: '#1a1a1a',
   },
   inputError: {
     borderColor: '#dc2626',
@@ -311,22 +314,22 @@ const styles = StyleSheet.create({
     marginTop: 8,
     width: '100%',
   },
-  loginButtonText: { 
-    color: '#fff', 
-    fontSize: 16, 
+  loginButtonText: {
+    color: '#fff',
+    fontSize: 16,
     fontWeight: '600',
   },
-  forgotPassword: { 
-    textAlign: 'center', 
-    marginTop: 16, 
-    fontSize: 14, 
+  forgotPassword: {
+    textAlign: 'center',
+    marginTop: 16,
+    fontSize: 14,
     color: '#666',
   },
-  errorText: { 
-    color: '#dc2626', 
-    fontSize: 13, 
-    marginBottom: 8, 
-    textAlign: 'left', 
+  errorText: {
+    color: '#dc2626',
+    fontSize: 13,
+    marginBottom: 8,
+    textAlign: 'left',
     width: '100%',
   },
   modalOverlay: {
