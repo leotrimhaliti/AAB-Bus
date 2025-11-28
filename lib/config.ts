@@ -13,7 +13,7 @@ function getEnvVar(key: string): string | undefined {
 }
 
 export const Config = {
-    GOOGLE_MAPS_API_KEY: getEnvVar('GOOGLE_MAPS_API_KEY') || '***REMOVED***',
+    GOOGLE_MAPS_API_KEY: getEnvVar('GOOGLE_MAPS_API_KEY') || '',
     SUPABASE_URL: getEnvVar('EXPO_PUBLIC_SUPABASE_URL'),
     SUPABASE_ANON_KEY: getEnvVar('EXPO_PUBLIC_SUPABASE_ANON_KEY'),
     BUS_API_URL: getEnvVar('EXPO_PUBLIC_BUS_API_URL'),
