@@ -32,17 +32,18 @@ Sentry.init({
 preloadImages().catch(err => console.warn('Image preload failed:', err));
 
 function RootNavigator() {
-  const { session, loading } = useAuth();
+  const { session, loading, isAuthenticated } = useAuth();
 
   useEffect(() => {
     if (!loading) {
-      if (session) {
+      // Check both session (Supabase) and isAuthenticated (Faculty API)
+      if (session || isAuthenticated) {
         router.replace('/(tabs)');
       } else {
         router.replace('/login');
       }
     }
-  }, [session, loading]);
+  }, [session, loading, isAuthenticated]);
 
   return (
     <Stack

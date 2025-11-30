@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import React, { useEffect, useState } from 'react';
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // import { supabase } from '@/lib/supabaseClient'; // uncomment if using Supabase
 
@@ -74,6 +75,7 @@ const infoStyles = StyleSheet.create({
 });
 
 export default function ProfileScreen() {
+  const insets = useSafeAreaInsets();
   const { session, signOut } = useAuth();
   const [details, setDetails] = useState<any>({});
   const [loading, setLoading] = useState(true);
@@ -151,7 +153,7 @@ export default function ProfileScreen() {
   if (loading) {
     return (
       <View style={styles.container}>
-        <View style={styles.header}>
+        <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
           <Text style={styles.headerTitle}>Profili im</Text>
         </View>
         <Text style={{ textAlign: 'center', marginTop: 40, color: '#c62829', fontSize: 16, fontWeight: '600' }}>Duke ngarkuar të dhënat e profilit...</Text>
@@ -162,7 +164,7 @@ export default function ProfileScreen() {
   if (error) {
     return (
       <View style={styles.container}>
-        <View style={styles.header}>
+        <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
           <Text style={styles.headerTitle}>Profili im</Text>
         </View>
         <Text style={{ textAlign: 'center', marginTop: 40, color: '#dc2626', fontSize: 16, fontWeight: '600', marginBottom: 20 }}>{error}</Text>
@@ -179,7 +181,7 @@ export default function ProfileScreen() {
       contentContainerStyle={styles.contentContainer}
       testID="profile-scroll-view"
     >
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
         <Text style={styles.headerTitle}>Profili im</Text>
       </View>
 
@@ -243,7 +245,6 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   header: {
-    paddingTop: 60,
     paddingBottom: 20,
     paddingHorizontal: 24,
     backgroundColor: '#fff',

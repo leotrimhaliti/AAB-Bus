@@ -7,7 +7,7 @@ export default {
     owner: "favorite-projects",
     version: "1.0.0",
     orientation: "portrait",
-    icon: "./assets/images/logobus.png",
+    icon: "./assets/images/aab.jpeg",
     scheme: "myapp",
     userInterfaceStyle: "automatic",
     newArchEnabled: true,
@@ -15,7 +15,7 @@ export default {
     splash: {
       image: "./assets/images/logobus.png",
       resizeMode: "contain",
-      backgroundColor: "#ffffff"
+      backgroundColor: "#ffffffff"
     },
 
     ios: {

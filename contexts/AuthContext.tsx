@@ -3,6 +3,10 @@ import { Session } from '@supabase/supabase-js';
 import * as SecureStore from 'expo-secure-store';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
+// Keys for SecureStore
+const CREDENTIALS_KEY = 'user_credentials';
+const ACCESS_TOKEN_KEY = 'access_token';
+
 interface UserProfile {
   name?: string;
   surname?: string;
@@ -17,7 +21,8 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   profile: UserProfile | null;
-  signIn: (email: string, password: string) => Promise<{ error: any }>;
+  isAuthenticated: boolean;
+  signIn: (email: string, password: string, rememberMe?: boolean) => Promise<{ error: any }>;
   signUp: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
 }
@@ -28,28 +33,136 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // --- listen for supabase session changes
-  useEffect(() => {
-    // Handle case where supabase is not initialized
-    if (!supabase) {
-      console.warn('⚠️ Supabase not available, skipping auth');
-      setLoading(false);
-      return;
+  // --- Auto-login with saved credentials
+  const tryAutoLogin = async () => {
+    try {
+      // First check if we have a valid access_token
+      const savedToken = await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
+      if (savedToken) {
+        // Validate token by fetching profile
+        const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/api/profile/details`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${savedToken}`,
+            'Content-Type': 'application/json',
+          },
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          setProfile({
+            name: data.emri,
+            surname: data.mbiemri,
+            email: data.adresaf,
+            faculty: data.fakulteti,
+            group: data.group,
+            birthdate: data.datelindja,
+            image: data.image,
+          });
+          setIsAuthenticated(true);
+          console.log('✅ Auto-login successful with saved token');
+          return true;
+        }
+      }
+
+      // If token expired or invalid, try re-login with saved credentials
+      const savedCredentials = await SecureStore.getItemAsync(CREDENTIALS_KEY);
+      if (savedCredentials) {
+        const { email, password } = JSON.parse(savedCredentials);
+        console.log('🔄 Attempting auto-login with saved credentials...');
+        
+        // Faculty API login
+        const body = `grant_type=password&username=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`;
+        const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/Token`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body,
+        });
+
+        const apiData = await response.json();
+        const token = apiData.access_token || apiData.access_ttoken;
+        
+        if (response.ok && token) {
+          await SecureStore.setItemAsync(ACCESS_TOKEN_KEY, token);
+          setIsAuthenticated(true);
+          
+          // Fetch profile with new token
+          const profileResponse = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/api/profile/details`, {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+          });
+          
+          if (profileResponse.ok) {
+            const data = await profileResponse.json();
+            setProfile({
+              name: data.emri,
+              surname: data.mbiemri,
+              email: data.adresaf,
+              faculty: data.fakulteti,
+              group: data.group,
+              birthdate: data.datelindja,
+              image: data.image,
+            });
+          }
+          
+          console.log('✅ Auto-login successful with saved credentials');
+          return true;
+        } else {
+          // Credentials no longer valid, clear them
+          await SecureStore.deleteItemAsync(CREDENTIALS_KEY);
+          await SecureStore.deleteItemAsync(ACCESS_TOKEN_KEY);
+          console.log('❌ Saved credentials expired, cleared');
+        }
+      }
+      
+      return false;
+    } catch (err) {
+      console.log('🔥 Auto-login error:', err);
+      return false;
     }
+  };
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setLoading(false);
-      if (session) fetchProfile(session);
-    });
+  // --- listen for supabase session changes AND auto-login
+  useEffect(() => {
+    const initAuth = async () => {
+      // Try auto-login first (Faculty API)
+      const autoLoginSuccess = await tryAutoLogin();
+      
+      // Handle Supabase session
+      if (supabase) {
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          setSession(session);
+          if (session) {
+            fetchProfile(session);
+            setIsAuthenticated(true);
+          }
+        } catch (err) {
+          console.warn('⚠️ Supabase session error:', err);
+        }
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      if (session) fetchProfile(session);
-    });
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+          setSession(session);
+          if (session) {
+            fetchProfile(session);
+            setIsAuthenticated(true);
+          }
+        });
 
-    return () => subscription.unsubscribe();
+        setLoading(false);
+        return () => subscription.unsubscribe();
+      } else {
+        console.warn('⚠️ Supabase not available, skipping auth');
+        setLoading(false);
+      }
+    };
+
+    initAuth();
   }, []);
 
   // --- fetch profile from supabase AND faculty API
@@ -106,8 +219,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // --- combined sign in
-  const signIn = async (email: string, password: string) => {
+  // --- combined sign in with credential saving for auto-login
+  const signIn = async (email: string, password: string, rememberMe: boolean = true) => {
     let error: any = null;
     let facultyLoginOk = false;
 
@@ -117,6 +230,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const { data, error: supaError } = await supabase.auth.signInWithPassword({ email, password });
         if (!supaError && data.session) {
           setSession(data.session);
+          setIsAuthenticated(true);
           await fetchProfile(data.session);
         } else if (supaError) {
           console.log('⚠️ Supabase login failed:', supaError.message);
@@ -141,7 +255,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const token = apiData.access_token || apiData.access_ttoken;
       if (response.ok && token) {
         facultyLoginOk = true;
-        await SecureStore.setItemAsync('access_token', token);
+        await SecureStore.setItemAsync(ACCESS_TOKEN_KEY, token);
+        
+        // 🔐 Save credentials securely for auto-login (always enabled for best UX)
+        if (rememberMe) {
+          await SecureStore.setItemAsync(CREDENTIALS_KEY, JSON.stringify({ email, password }));
+          console.log('✅ Credentials saved for auto-login');
+        }
+        
+        setIsAuthenticated(true);
         await fetchProfile(session);
       } else {
         console.log('❌ Faculty API login failed:', apiData.error_description);
@@ -171,12 +293,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     setProfile(null);
     setSession(null);
-    await SecureStore.deleteItemAsync('access_token');
+    setIsAuthenticated(false);
+    
+    // Clear all stored credentials and tokens
+    await SecureStore.deleteItemAsync(ACCESS_TOKEN_KEY);
+    await SecureStore.deleteItemAsync(CREDENTIALS_KEY);
+    console.log('🚪 Logged out, credentials cleared');
   };
 
 
   return (
-    <AuthContext.Provider value={{ session, loading, profile, signIn, signUp, signOut }}>
+    <AuthContext.Provider value={{ session, loading, profile, isAuthenticated, signIn, signUp, signOut }}>
       {children}
     </AuthContext.Provider>
   );

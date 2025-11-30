@@ -10,12 +10,14 @@ import {
   Text,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useBusLocations } from '../../hooks/useBusLocations';
 import { useBusStops } from '../../hooks/useBusStops';
 
 
 
 export default function BusTrackingScreen() {
+  const insets = useSafeAreaInsets();
   const [selectedBus, setSelectedBus] = useState<string | null>(null);
   const [isFollowing, setIsFollowing] = useState(false);
   const [busProgress, setBusProgress] = useState<{ [key: string]: number }>({});
@@ -188,8 +190,8 @@ export default function BusTrackingScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
+      {/* Header - Responsive with safe area */}
+      <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
         <Text style={styles.headerTitle}> </Text>
         {isOffline && (
           <View style={styles.offlineBadge}>
@@ -296,7 +298,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#f8f9fa',
   },
   header: {
-    paddingTop: 50,
     paddingBottom: 15,
     paddingHorizontal: 20,
     backgroundColor: '#c62829',

@@ -1,6 +1,7 @@
 // app/(tabs)/orari.tsx
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useBusStops } from '../../hooks/useBusStops';
 
 const orariData = [
@@ -20,13 +21,14 @@ const addMinutes = (time: string, minutes: number): string => {
 };
 
 export default function Orari() {
+  const insets = useSafeAreaInsets();
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const { busStops, loading, error, refetch } = useBusStops();
 
   if (loading) {
     return (
       <View style={styles.container}>
-        <View style={styles.header}>
+        <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
           <Text style={styles.title}>🚌 Orari i Autobusave</Text>
         </View>
         <Text style={{ textAlign: 'center', marginTop: 40, color: '#c62829' }}>Duke ngarkuar stacionet...</Text>
@@ -37,7 +39,7 @@ export default function Orari() {
   if (error) {
     return (
       <View style={styles.container}>
-        <View style={styles.header}>
+        <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
           <Text style={styles.title}>🚌 Orari i Autobusave</Text>
         </View>
         <Text style={{ textAlign: 'center', marginTop: 40, color: '#c62829' }}>Nuk u mund të ngarkohen stacionet e autobusit.</Text>
@@ -50,7 +52,7 @@ export default function Orari() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
         <Text style={styles.title}>🚌 Orari i Autobusave</Text>
         <Text style={styles.subtitle}>Kliko një orë për të parë stacionet</Text>
       </View>
@@ -119,7 +121,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#f5f7fa',
   },
   header: {
-    paddingTop: 60,
     paddingBottom: 20,
     paddingHorizontal: 24,
     backgroundColor: '#fff',
