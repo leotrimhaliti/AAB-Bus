@@ -5,10 +5,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function TabLayout() {
   const insets = useSafeAreaInsets();
-  
+
   // Calculate responsive tab bar height based on safe area
   const tabBarHeight = 60 + insets.bottom;
-  
+
   return (
     <Tabs
       screenOptions={{

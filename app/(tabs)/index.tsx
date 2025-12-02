@@ -13,20 +13,23 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useBusLocations } from '../../hooks/useBusLocations';
 import { useBusStops } from '../../hooks/useBusStops';
-
-
+import { useBusTracker } from '../../hooks/useBusTracker';
+import { useSimulatedBus } from '../../hooks/useSimulatedBus';
 
 export default function BusTrackingScreen() {
   const insets = useSafeAreaInsets();
   const [selectedBus, setSelectedBus] = useState<string | null>(null);
   const [isFollowing, setIsFollowing] = useState(false);
-  const [busProgress, setBusProgress] = useState<{ [key: string]: number }>({});
   const [busDirection, setBusDirection] = useState<{ [key: string]: 'outbound' | 'return' }>({});
 
   // New state to hold the calculated index for the UI
   const [currentStopIndex, setCurrentStopIndex] = useState(-1);
 
   const lastMarkerPress = useRef<number>(0);
+
+  // **SIMULATION MODE** - Set to true to test without real buses
+  const SIMULATION_MODE = false;
+  const simulatedLocation = useSimulatedBus(SIMULATION_MODE);
 
   // Toast State
   const [toastMsg, setToastMsg] = useState('');
@@ -40,7 +43,6 @@ export default function BusTrackingScreen() {
     loading,
     error,
     refresh,
-    lastUpdate,
     isOffline,
   } = useBusLocations({
     restUrl,
@@ -50,7 +52,14 @@ export default function BusTrackingScreen() {
   });
 
   const { busStops, loading: busStopsLoading, error: busStopsError } = useBusStops();
-  const routeStops = useMemo(() => busStops, [busStops]);
+  const routeStops = useMemo(() => {
+    if (!busStops) return [];
+    return [...busStops].sort((a, b) => {
+      const aOrder = typeof a.stop_order === 'number' ? a.stop_order : Number.MAX_SAFE_INTEGER;
+      const bOrder = typeof b.stop_order === 'number' ? b.stop_order : Number.MAX_SAFE_INTEGER;
+      return aOrder - bOrder;
+    });
+  }, [busStops]);
 
   const activeBuses = useMemo(() => {
     if (!busData) return [];
@@ -70,13 +79,28 @@ export default function BusTrackingScreen() {
 
   // Prepare bus data for LeafletMap
   const busesForMap = useMemo(() => {
-    return activeBuses.map(([busId, bus]) => ({
+    const realBuses = activeBuses.map(([busId, bus]) => ({
       busId,
       lat: parseFloat(bus.lat),
       lng: parseFloat(bus.lng),
       heading: bus.heading,
     })).filter(b => !isNaN(b.lat) && !isNaN(b.lng));
-  }, [activeBuses]);
+
+    // Add simulated bus if enabled
+    if (SIMULATION_MODE && simulatedLocation) {
+      return [
+        ...realBuses,
+        {
+          busId: 'SIM-001',
+          lat: simulatedLocation.lat,
+          lng: simulatedLocation.lng,
+          heading: simulatedLocation.heading?.toString() || '0',
+        }
+      ];
+    }
+
+    return realBuses;
+  }, [activeBuses, simulatedLocation, SIMULATION_MODE]);
 
   const handleBusMarkerPress = useCallback((busId: string) => {
     lastMarkerPress.current = Date.now();
@@ -95,80 +119,54 @@ export default function BusTrackingScreen() {
     setIsFollowing(false);
   }, []);
 
-  // --- LOGIC FIX: Moved from useMemo to useEffect to avoid side effects ---
-  useEffect(() => {
-    if (!selectedBus || !busData || routeStops.length === 0) {
-      setCurrentStopIndex(-1);
-      return;
+  // Get current bus location object
+  const currentBusLocation = useMemo(() => {
+    // If in simulation mode and simulated bus is selected
+    if (SIMULATION_MODE && selectedBus === 'SIM-001' && simulatedLocation) {
+      return {
+        lat: simulatedLocation.lat,
+        lng: simulatedLocation.lng,
+        heading: simulatedLocation.heading,
+      };
     }
 
+    // Otherwise use real bus data
+    if (!selectedBus || !busData) return null;
     const bus = busData[selectedBus];
-    if (!bus || bus.loc_valid !== '1') return;
+    if (!bus || bus.loc_valid !== '1') return null;
+    return {
+      lat: parseFloat(bus.lat),
+      lng: parseFloat(bus.lng),
+      heading: bus.heading ? parseFloat(bus.heading) : undefined,
+    };
+  }, [selectedBus, busData, SIMULATION_MODE, simulatedLocation]);
 
-    const busLat = parseFloat(bus.lat);
-    const busLng = parseFloat(bus.lng);
-    if (isNaN(busLat) || isNaN(busLng)) return;
+  const {
+    currentStopIndex: trackerCurrentIndex,
+    direction,
+    progress,
+    distanceAlongSegment,
+  } = useBusTracker(currentBusLocation, useMemo(() => routeStops.map(s => ({
+    ...s,
+    lat: s.latitude,
+    lng: s.longitude,
+    order: typeof s.stop_order === 'number' ? s.stop_order : 0
+  })), [routeStops]));
 
-    const currentProgress = busProgress[selectedBus] || 0;
-    const currentDir = busDirection[selectedBus] || 'outbound';
-
-    let closestIndex = 0;
-    let minDistance = Infinity;
-
-    routeStops.forEach((stop, index) => {
-      const stopLat = stop.latitude;
-      const stopLng = stop.longitude;
-      const distance = Math.sqrt(
-        Math.pow(busLat - stopLat, 2) + Math.pow(busLng - stopLng, 2)
-      ) * 111000; // Approx distance in meters
-      if (distance < minDistance) {
-        minDistance = distance;
-        closestIndex = index;
-      }
-    });
-
-    let newProgress = currentProgress;
-    let newDirection = currentDir;
-
-    if (closestIndex === 5 && minDistance < 150 && currentDir === 'outbound') {
-      newDirection = 'return';
+  // Sync tracker state with local state for UI
+  useEffect(() => {
+    if (trackerCurrentIndex !== -1) {
+      setCurrentStopIndex(trackerCurrentIndex);
+      setBusDirection(prev => ({ ...prev, [selectedBus!]: direction }));
     }
+  }, [trackerCurrentIndex, direction, selectedBus]);
 
-    const isNearKolegjiAAB = minDistance < 200 && (closestIndex === 0 || closestIndex === routeStops.length - 1);
-
-    if (isNearKolegjiAAB) {
-      if (currentDir === 'return') {
-        newProgress = routeStops.length - 1;
-        if (currentProgress === routeStops.length - 1 && minDistance > 300) {
-          newProgress = 0;
-          newDirection = 'outbound';
-        }
-      } else {
-        newProgress = 0;
-      }
+  // Auto-select simulated bus when in simulation mode
+  useEffect(() => {
+    if (SIMULATION_MODE && !selectedBus && simulatedLocation) {
+      setSelectedBus('SIM-001');
     }
-    else if (closestIndex > currentProgress && minDistance < 200) {
-      newProgress = closestIndex;
-    }
-    else if (minDistance < 100 && closestIndex >= currentProgress) {
-      newProgress = closestIndex;
-    }
-
-    // SAFE STATE UPDATES: Only update if value changed to prevent infinite loops
-    if (newProgress !== currentProgress) {
-      setBusProgress(prev => ({ ...prev, [selectedBus]: newProgress }));
-    }
-    if (newDirection !== currentDir) {
-      setBusDirection(prev => ({ ...prev, [selectedBus]: newDirection }));
-    }
-
-    // Update the UI Index
-    setCurrentStopIndex(newProgress);
-
-  }, [selectedBus, busData, routeStops, busProgress, busDirection]);
-
-
-
+  }, [SIMULATION_MODE, selectedBus, simulatedLocation]);
 
   if (isInitialLoading) {
     return (
@@ -222,46 +220,94 @@ export default function BusTrackingScreen() {
         {
           selectedBus ? (
             <ScrollView style={styles.stopsList} showsVerticalScrollIndicator={false}>
-              {routeStops.map((stop, index) => {
-                const isPassed = currentStopIndex !== -1 && currentStopIndex > index;
-                const isCurrent = currentStopIndex !== -1 && currentStopIndex === index;
+              {(() => {
+                // Create display list with AAB at the end
+                const displayStops = [...routeStops];
+                if (displayStops.length > 0) {
+                  displayStops.push({ ...displayStops[0], id: -1, name: 'Kolegji AAB' });
+                }
 
-                return (
-                  <View key={index} style={styles.stopItem}>
-                    <View style={styles.stopIndicatorContainer}>
-                      {isPassed ? (
-                        <View style={styles.stopCirclePassed} />
-                      ) : isCurrent ? (
-                        <View style={styles.stopCircleCurrent} />
-                      ) : index === 0 ? (
-                        <View style={styles.stopCircleStart} />
-                      ) : index === routeStops.length - 1 ? (
-                        <View style={styles.stopCircleEnd} />
-                      ) : (
-                        <View style={styles.stopCircle} />
-                      )}
-                      {index < routeStops.length - 1 && (
-                        <View style={[
-                          styles.stopLine,
-                          isPassed && styles.stopLinePassed
-                        ]} />
-                      )}
+                return displayStops.map((stop, index) => {
+                  const isLastStop = index === displayStops.length - 1;
+
+                  let isCurrent = false;
+                  let isPassed = false;
+
+                  if (currentStopIndex !== -1) {
+                    if (index === displayStops.length - 1) {
+                      // Last appended stop
+                      isCurrent = currentStopIndex === 0 && busDirection[selectedBus!] === 'return';
+                    } else {
+                      // Normal stops
+                      if (busDirection[selectedBus!] === 'return' && currentStopIndex === 0) {
+                        isPassed = true;
+                      } else {
+                        isCurrent = currentStopIndex === index;
+                        isPassed = currentStopIndex > index;
+                        if (index === 0 && busDirection[selectedBus!] === 'return') {
+                          isCurrent = false;
+                          isPassed = true;
+                        }
+                      }
+                    }
+                  }
+
+                  return (
+                    <View key={`${stop.id}-${index}`} style={styles.stopItem}>
+                      <View style={styles.stopIndicatorContainer}>
+                        {isPassed ? (
+                          <View style={styles.stopCirclePassed} />
+                        ) : isCurrent ? (
+                          <View style={styles.stopCircleCurrent} />
+                        ) : index === 0 ? (
+                          <View style={styles.stopCircleStart} />
+                        ) : isLastStop ? (
+                          <View style={styles.stopCircleEnd} />
+                        ) : (
+                          <View style={styles.stopCircle} />
+                        )}
+                        {index < displayStops.length - 1 && (
+                          <View style={[
+                            styles.stopLine,
+                            isPassed && styles.stopLinePassed
+                          ]}>
+                            {/* Show bus icon on THIS line if this is the current stop */}
+                            {isCurrent && (
+                              <View
+                                style={{
+                                  position: 'absolute',
+                                  top: `${Math.max(5, Math.min(85, progress * 85))}%`,
+                                  left: -9,
+                                  zIndex: 100,
+                                }}
+                              >
+                                <Image
+                                  source={require('@/assets/images/aab-buss.png')}
+                                  style={styles.movingBusIcon}
+                                  resizeMode="contain"
+                                />
+                              </View>
+                            )}
+                          </View>
+                        )}
+                      </View>
+                      <View style={styles.stopContent}>
+                        <Text style={[
+                          styles.stopName,
+                          isPassed && styles.stopNamePassed,
+                          isCurrent && styles.stopNameCurrent
+                        ]}>
+                          {stop.name}
+                        </Text>
+                        {isCurrent && (
+                          <Text style={styles.currentStopLabel}>{busDirection[selectedBus!] === 'return' ? '(Kthim)' : ''}</Text>
+                        )}
+                      </View>
                     </View>
-                    <View style={styles.stopContent}>
-                      <Text style={[
-                        styles.stopName,
-                        isPassed && styles.stopNamePassed,
-                        isCurrent && styles.stopNameCurrent
-                      ]}>
-                        {stop.name}
-                      </Text>
-                      {isCurrent && (
-                        <Text style={styles.currentStopLabel}>Pozicioni aktual</Text>
-                      )}
-                    </View>
-                  </View>
-                );
-              })}
+                  );
+
+                });
+              })()}
             </ScrollView>
           ) : (
             <View style={styles.emptyState}>
@@ -313,7 +359,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     color: '#fff',
-    fontSize: 1,
+    fontSize: 18,
     fontWeight: '700',
   },
   offlineBadge: {
@@ -376,11 +422,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     marginBottom: 0,
     minHeight: 50,
+    alignItems: 'flex-start', // Align dots and text at the top
   },
   stopIndicatorContainer: {
     width: 24,
     alignItems: 'center',
     marginRight: 12,
+    alignSelf: 'stretch', // Extend full height of the row
+    minHeight: 50,
   },
   stopCircle: {
     width: 10,
@@ -428,7 +477,7 @@ const styles = StyleSheet.create({
     bottom: -10,
     width: 2,
     backgroundColor: '#e5e5e5',
-    zIndex: 1,
+    zIndex: 10, // Higher than dots (2) so bus icon appears on top
   },
   stopLinePassed: {
     backgroundColor: '#e5e5e5',
@@ -441,6 +490,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#374151',
     fontWeight: '500',
+    lineHeight: 14, // Match font size for tight alignment
   },
   stopNamePassed: {
     color: '#9ca3af',
@@ -454,6 +504,26 @@ const styles = StyleSheet.create({
     color: '#c62829',
     marginTop: 2,
     fontWeight: '600',
+  },
+  nextStopLabel: {
+    fontSize: 11,
+    color: '#6b7280',
+    marginTop: 2,
+    fontWeight: '500',
+  },
+  movingBusIcon: {
+    width: 20,
+    height: 20,
+  },
+  busPositionLabel: {
+    fontSize: 10,
+    color: '#c62829',
+    fontWeight: '600',
+    marginLeft: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    paddingHorizontal: 3,
+    paddingVertical: 1,
+    borderRadius: 2,
   },
   emptyState: {
     flex: 1,

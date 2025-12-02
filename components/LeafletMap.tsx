@@ -171,18 +171,22 @@ const LeafletMap: React.FC<LeafletMapProps> = ({
     // Initialize map
     const map = L.map('map', {
       zoomControl: false,
-      attributionControl: true
+      attributionControl: false
     }).setView([${initialRegion.latitude}, ${initialRegion.longitude}], ${initialRegion.zoom});
 
     // Add OpenStreetMap tiles (FREE!)
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
-      attribution: '© OpenStreetMap'
     }).addTo(map);
 
     // Store markers
     let busMarkers = {};
+    let busPositions = {}; // Store current animated positions
+    let animationFrames = {}; // Store animation frame IDs
     let stopMarkers = [];
+
+    // Smooth animation duration in ms
+    const ANIMATION_DURATION = 2000;
 
     // Custom stop marker icon (red pin)
     const stopIcon = L.icon({
@@ -225,6 +229,68 @@ const LeafletMap: React.FC<LeafletMapProps> = ({
       };
     }
 
+    // Smooth animation function using easing
+    function easeInOutCubic(t) {
+      return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+    }
+
+    // Animate marker from current position to target position
+    function animateMarker(busId, targetLat, targetLng, marker) {
+      // Cancel any existing animation for this bus
+      if (animationFrames[busId]) {
+        cancelAnimationFrame(animationFrames[busId]);
+      }
+
+      // Get current position (or use target if first time)
+      const startPos = busPositions[busId] || { lat: targetLat, lng: targetLng };
+      
+      // If positions are the same, no need to animate
+      const distance = Math.sqrt(
+        Math.pow(targetLat - startPos.lat, 2) + 
+        Math.pow(targetLng - startPos.lng, 2)
+      );
+      
+      // Skip animation for very small movements or first placement
+      if (distance < 0.00001) {
+        busPositions[busId] = { lat: targetLat, lng: targetLng };
+        return;
+      }
+
+      // Skip animation for large jumps (> 1km) - likely GPS correction
+      if (distance > 0.01) {
+        marker.setLatLng([targetLat, targetLng]);
+        busPositions[busId] = { lat: targetLat, lng: targetLng };
+        return;
+      }
+
+      const startTime = performance.now();
+      
+      function animate(currentTime) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / ANIMATION_DURATION, 1);
+        const easedProgress = easeInOutCubic(progress);
+
+        // Interpolate position
+        const currentLat = startPos.lat + (targetLat - startPos.lat) * easedProgress;
+        const currentLng = startPos.lng + (targetLng - startPos.lng) * easedProgress;
+
+        // Update marker position
+        marker.setLatLng([currentLat, currentLng]);
+
+        // Store current position
+        busPositions[busId] = { lat: currentLat, lng: currentLng };
+
+        // Continue animation if not complete
+        if (progress < 1) {
+          animationFrames[busId] = requestAnimationFrame(animate);
+        } else {
+          delete animationFrames[busId];
+        }
+      }
+
+      animationFrames[busId] = requestAnimationFrame(animate);
+    }
+
     // Update buses on map
     function updateBuses(buses, selectedBusId) {
       // Remove old markers that no longer exist
@@ -255,24 +321,30 @@ const LeafletMap: React.FC<LeafletMapProps> = ({
             iconAnchor: [22, 22]
           });
 
-          const lat = overlapBus.lat + offset.lat;
-          const lng = overlapBus.lng + offset.lng;
+          const targetLat = overlapBus.lat + offset.lat;
+          const targetLng = overlapBus.lng + offset.lng;
 
           if (busMarkers[overlapBus.busId]) {
-            // Update existing marker
-            busMarkers[overlapBus.busId].setLatLng([lat, lng]);
-            busMarkers[overlapBus.busId].setIcon(icon);
+            // Update existing marker with smooth animation
+            const marker = busMarkers[overlapBus.busId];
+            marker.setIcon(icon);
+            
+            // Animate to new position instead of teleporting
+            animateMarker(overlapBus.busId, targetLat, targetLng, marker);
+            
             if (overlapBus.heading) {
-              busMarkers[overlapBus.busId].setRotationAngle(parseFloat(overlapBus.heading));
+              marker.setRotationAngle(parseFloat(overlapBus.heading));
             }
           } else {
-            // Create new marker
-            const marker = L.marker([lat, lng], { icon, rotationAngle: overlapBus.heading ? parseFloat(overlapBus.heading) : 0 });
+            // Create new marker (no animation for first appearance)
+            const marker = L.marker([targetLat, targetLng], { icon, rotationAngle: overlapBus.heading ? parseFloat(overlapBus.heading) : 0 });
             marker.on('click', () => {
               window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'busPress', busId: overlapBus.busId }));
             });
             marker.addTo(map);
             busMarkers[overlapBus.busId] = marker;
+            // Store initial position
+            busPositions[overlapBus.busId] = { lat: targetLat, lng: targetLng };
           }
         });
       });
