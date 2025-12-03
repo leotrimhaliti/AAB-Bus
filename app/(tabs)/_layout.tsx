@@ -1,6 +1,5 @@
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
-import { MapPin, User } from 'lucide-react-native';
-import { Text } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function TabLayout() {
@@ -40,21 +39,27 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'Autobusat',
-          tabBarIcon: ({ size, color }) => <MapPin size={size} color={color} />,
+          tabBarIcon: ({ size, color }) => (
+            <MaterialCommunityIcons name="bus" size={24} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
         name="orari"
         options={{
           title: 'Orari',
-          tabBarIcon: () => <Text style={{ fontSize: 20 }}>🕒</Text>, // emoji icon
+          tabBarIcon: ({ size, color }) => (
+            <MaterialCommunityIcons name="clock-time-four-outline" size={24} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           title: 'Profili',
-          tabBarIcon: ({ size, color }) => <User size={size} color={color} />,
+          tabBarIcon: ({ size, color }) => (
+            <MaterialCommunityIcons name="account-circle-outline" size={24} color={color} />
+          ),
         }}
       />
     </Tabs>
