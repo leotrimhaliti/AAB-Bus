@@ -1,8 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { BusDelayResult, BusWithTracking, calculateBusDelay } from '../../hooks/useBusDelay';
-import { useBusLocations } from '../../hooks/useBusLocations';
 import { useBusStops } from '../../hooks/useBusStops';
 
 const orariData = [
@@ -23,102 +21,14 @@ const addMinutes = (time: string, minutes: number): string => {
     return `${String(newHours).padStart(2, '0')}:${String(newMins).padStart(2, '0')}`;
 };
 
-const haversineDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
-    const toRad = (deg: number) => (deg * Math.PI) / 180;
-    const dLat = toRad(lat2 - lat1);
-    const dLon = toRad(lon2 - lon1);
-    const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return 6371000 * c;
-};
-
-const formatDelayLabel = (delay?: BusDelayResult): { text: string; variant: 'default' | 'slight' | 'delayed' | 'early' | 'unknown' } => {
-    if (!delay || delay.status === 'unknown') {
-        return { text: 'Live', variant: 'unknown' };
-    }
-
-    if (delay.status === 'delayed') {
-        return { text: `+${delay.delayMinutes} min`, variant: 'delayed' };
-    }
-
-    if (delay.status === 'slight-delay') {
-        return { text: `+${delay.delayMinutes} min`, variant: 'slight' };
-    }
-
-    if (delay.status === 'early') {
-        return { text: `${delay.delayMinutes} min`, variant: 'early' };
-    }
-
-    return { text: 'Në kohë', variant: 'default' };
-};
-
 export default function Orari() {
     const insets = useSafeAreaInsets();
     const [selectedTime, setSelectedTime] = useState<string | null>(null);
     const { busStops, loading, error, refetch } = useBusStops();
-    const restUrl = `${process.env.EXPO_PUBLIC_BUS_API_URL || ''}/api/bus`;
-    const wsUrl = null;
-
-    const { data: busData } = useBusLocations({
-        restUrl,
-        wsUrl,
-        pollInterval: 10000,
-        enableWebSocket: false,
-    });
 
     const orderedStops = useMemo(() => {
         return [...busStops].sort((a, b) => a.stop_order - b.stop_order);
     }, [busStops]);
-
-    const trackedBuses = useMemo(() => {
-        if (!busData || orderedStops.length === 0) return [] as BusWithTracking[];
-
-        return Object.values(busData).reduce<BusWithTracking[]>((acc, bus) => {
-            if (bus.loc_valid !== '1') {
-                return acc;
-            }
-
-            const lat = parseFloat(bus.lat);
-            const lng = parseFloat(bus.lng);
-            if (Number.isNaN(lat) || Number.isNaN(lng)) {
-                return acc;
-            }
-
-            let closestIndex = 0;
-            let minDistance = Number.POSITIVE_INFINITY;
-
-            orderedStops.forEach((stop, idx) => {
-                const distance = haversineDistance(lat, lng, stop.latitude, stop.longitude);
-                if (distance < minDistance) {
-                    minDistance = distance;
-                    closestIndex = idx;
-                }
-            });
-
-            const direction: 'outbound' | 'return' = closestIndex >= orderedStops.length - 1 ? 'return' : 'outbound';
-
-            acc.push({
-                ...bus,
-                currentStopIndex: closestIndex,
-                direction,
-            });
-
-            return acc;
-        }, []);
-    }, [busData, orderedStops]);
-
-    const stopsCount = orderedStops.length;
-
-    const delayByDeparture = useMemo(() => {
-        if (!stopsCount) {
-            return {} as Record<string, BusDelayResult>;
-        }
-
-        return orariData.reduce<Record<string, BusDelayResult>>((acc, time) => {
-            acc[time] = calculateBusDelay(time, trackedBuses, stopsCount);
-            return acc;
-        }, {});
-    }, [trackedBuses, stopsCount]);
 
     if (loading) {
         return (
@@ -158,11 +68,6 @@ export default function Orari() {
                 showsVerticalScrollIndicator={false}
             >
                 {orariData.map((ora, index) => {
-                    const delayInfo = delayByDeparture[ora];
-                    const { text: delayLabel, variant } = formatDelayLabel(delayInfo);
-                    const delayMinutes = delayInfo?.delayMinutes ?? 0;
-                    const positiveDelay = delayMinutes > 0 ? delayMinutes : 0;
-
                     return (
                         <View key={index}>
                             <TouchableOpacity
@@ -183,20 +88,7 @@ export default function Orari() {
                                     </Text>
                                     <Text style={styles.oraLabel}>Nisje nga AAB</Text>
                                 </View>
-                                <View style={styles.statusWrapper}>
-                                    <Text
-                                        style={[
-                                            styles.delayBadge,
-                                            variant === 'delayed' && styles.delayBadgeDelayed,
-                                            variant === 'slight' && styles.delayBadgeSlight,
-                                            variant === 'early' && styles.delayBadgeEarly,
-                                            variant === 'unknown' && styles.delayBadgeUnknown,
-                                        ]}
-                                    >
-                                        {delayLabel}
-                                    </Text>
-                                    <Text style={styles.arrow}>{selectedTime === ora ? '▼' : '▶'}</Text>
-                                </View>
+                                <Text style={styles.arrow}>{selectedTime === ora ? '▼' : '▶'}</Text>
                             </TouchableOpacity>
 
                             {selectedTime === ora && (
@@ -228,7 +120,7 @@ export default function Orari() {
                                                 }
                                             }
 
-                                            const arrivalTime = addMinutes(ora, minutesToAdd + positiveDelay);
+                                            const arrivalTime = addMinutes(ora, minutesToAdd);
 
                                             return (
                                                 <View key={stopIndex} style={styles.stopItem}>
@@ -245,12 +137,7 @@ export default function Orari() {
                                                     </View>
                                                     <View style={styles.stopContent}>
                                                         <Text style={styles.stopName}>{stop.name}</Text>
-                                                        <View style={styles.stopTimeContainer}>
-                                                            <Text style={styles.stopTime}>{arrivalTime}</Text>
-                                                            {positiveDelay > 0 && (
-                                                                <Text style={styles.stopDelay}>{`+${positiveDelay}m`}</Text>
-                                                            )}
-                                                        </View>
+                                                        <Text style={styles.stopTime}>{arrivalTime}</Text>
                                                     </View>
                                                 </View>
                                             );
@@ -347,9 +234,6 @@ const styles = StyleSheet.create({
     timeContainer: {
         flex: 1,
     },
-    statusWrapper: {
-        alignItems: 'flex-end',
-    },
     ora: {
         fontSize: 18,
         fontWeight: '600',
@@ -364,37 +248,10 @@ const styles = StyleSheet.create({
         color: '#6b7280',
         marginTop: 2,
     },
-    delayBadge: {
-        fontSize: 12,
-        fontWeight: '600',
-        color: '#1f2933',
-        backgroundColor: '#e5e7eb',
-        paddingHorizontal: 8,
-        paddingVertical: 4,
-        borderRadius: 999,
-        marginBottom: 4,
-    },
-    delayBadgeSlight: {
-        backgroundColor: 'rgba(255,193,7,0.15)',
-        color: '#b7791f',
-    },
-    delayBadgeDelayed: {
-        backgroundColor: 'rgba(198,40,41,0.12)',
-        color: '#c62829',
-    },
-    delayBadgeEarly: {
-        backgroundColor: 'rgba(16,185,129,0.12)',
-        color: '#059669',
-    },
-    delayBadgeUnknown: {
-        color: '#6b7280',
-        backgroundColor: '#f3f4f6',
-    },
     arrow: {
         fontSize: 14,
         color: '#9ca3af',
         fontWeight: '600',
-        marginTop: 2,
     },
     stopsContainer: {
         backgroundColor: '#fff',
@@ -472,23 +329,9 @@ const styles = StyleSheet.create({
         fontWeight: '500',
         flex: 1,
     },
-    stopTimeContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
     stopTime: {
         fontSize: 14,
         color: '#1a1a1a',
         fontWeight: '600',
-    },
-    stopDelay: {
-        fontSize: 12,
-        color: '#c62829',
-        fontWeight: '600',
-        backgroundColor: 'rgba(198,40,41,0.08)',
-        paddingHorizontal: 6,
-        paddingVertical: 2,
-        borderRadius: 999,
-        marginLeft: 6,
     },
 });
