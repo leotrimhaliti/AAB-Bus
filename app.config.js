@@ -7,7 +7,7 @@ export default {
     owner: "favorite-projects",
     version: "1.0.0",
     orientation: "portrait",
-    icon: "./assets/images/aab.jpeg",
+    icon: "./assets/images/logoaab.jpeg",
     scheme: "myapp",
     userInterfaceStyle: "automatic",
     newArchEnabled: true,
