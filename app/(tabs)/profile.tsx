@@ -6,7 +6,15 @@ import React, { useEffect, useState } from 'react';
 import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-// import { supabase } from '@/lib/supabaseClient'; // uncomment if using Supabase
+interface ProfileDetails {
+    emri?: string;
+    mbiemri?: string;
+    adresaf?: string;
+    fakulteti?: string;
+    group?: string;
+    datelindja?: string;
+    image?: string;
+}
 
 interface InfoItemProps {
     iconName: keyof typeof MaterialCommunityIcons.glyphMap;
@@ -80,8 +88,8 @@ const infoStyles = StyleSheet.create({
 
 export default function ProfileScreen() {
     const insets = useSafeAreaInsets();
-    const { session, signOut } = useAuth();
-    const [details, setDetails] = useState<any>({});
+    const { signOut, profile } = useAuth();
+    const [details, setDetails] = useState<ProfileDetails>({});
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -98,7 +106,7 @@ export default function ProfileScreen() {
                 return;
             }
 
-            const timeoutPromise = new Promise((_, reject) => {
+            const timeoutPromise = new Promise<never>((_, reject) => {
                 setTimeout(() => reject(new Error('Request timed out')), 10000);
             });
 
@@ -113,17 +121,17 @@ export default function ProfileScreen() {
                 }
             );
 
-            const response = await Promise.race([fetchPromise, timeoutPromise]) as Response;
+            const response = await Promise.race([fetchPromise, timeoutPromise]);
 
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
 
-            const data = await response.json();
+            const data: ProfileDetails = await response.json();
             setDetails(data);
-        } catch (err: any) {
-            console.error('Profile fetch error:', err);
-            setError(err.message === 'Request timed out'
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+            setError(errorMessage === 'Request timed out'
                 ? 'Kërkesa vonoi shumë. Ju lutem kontrolloni internetin.'
                 : 'Gabim gjatë ngarkimit të të dhënave të profilit.');
         } finally {
@@ -133,7 +141,7 @@ export default function ProfileScreen() {
 
     useEffect(() => {
         fetchDetails();
-    }, [session]);
+    }, []);
     const router = useRouter();
 
     const handleSignOut = async () => {
@@ -200,7 +208,7 @@ export default function ProfileScreen() {
                     <InfoItem
                         iconName="email-outline"
                         label="Email Adresa"
-                        value={details.adresaf || session?.user?.email || 'Nuk ka të dhëna'}
+                        value={details.adresaf || profile?.email || 'Nuk ka të dhëna'}
                         testID="profile-email-value"
                     />
 
@@ -239,7 +247,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#f5f7fa',
     },
     topSection: {
-        flex: 0.45, // 45% height
+        flex: 0.45,
         backgroundColor: '#ffffff',
         borderBottomLeftRadius: 40,
         borderBottomRightRadius: 40,
@@ -277,7 +285,7 @@ const styles = StyleSheet.create({
         borderRadius: 55,
         padding: 4,
         borderWidth: 3,
-        borderColor: '#c62829', // Red border
+        borderColor: '#c62829',
         marginBottom: 16,
         justifyContent: 'center',
         alignItems: 'center',
@@ -303,7 +311,7 @@ const styles = StyleSheet.create({
         textAlign: 'center',
     },
     bottomSection: {
-        flex: 0.55, // 55% height
+        flex: 0.55,
         paddingHorizontal: 24,
         paddingTop: 30,
         paddingBottom: 20,

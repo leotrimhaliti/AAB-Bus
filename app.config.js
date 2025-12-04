@@ -20,6 +20,7 @@ export default {
 
     ios: {
       supportsTablet: true,
+      bundleIdentifier: "com.favoriteprojects.aabbus",
       config: {
         usesNonExemptEncryption: false,
         googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY
@@ -62,6 +63,7 @@ export default {
       GOOGLE_MAPS_API_KEY: process.env.GOOGLE_MAPS_API_KEY,
       EXPO_PUBLIC_BUS_API_URL: process.env.EXPO_PUBLIC_BUS_API_URL,
       EXPO_PUBLIC_API_URL: process.env.EXPO_PUBLIC_API_URL,
+      EXPO_PUBLIC_SENTRY_DSN: process.env.EXPO_PUBLIC_SENTRY_DSN,
       eas: {
         projectId: "3d046363-3773-43e2-9c14-e724b97d4757"
       }

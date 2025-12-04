@@ -26,27 +26,27 @@ export default function LoginScreen() {
   const [error, setError] = useState('');
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
+
+  // Password Reset State
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState('');
   const [contractId, setContractId] = useState('');
   const [resetLoading, setResetLoading] = useState(false);
   const [resetError, setResetError] = useState('');
   const [resetSuccess, setResetSuccess] = useState(false);
+  const [resetMessage, setResetMessage] = useState('');
 
   const handleLogin = async () => {
-    // Clear previous errors
     setError('');
     setEmailError('');
     setPasswordError('');
 
-    // Validate email
     const emailValidation = validateEmail(email);
     if (!emailValidation.valid) {
       setEmailError(emailValidation.error || '');
       return;
     }
 
-    // Validate password
     const passwordValidation = validatePassword(password);
     if (!passwordValidation.valid) {
       setPasswordError(passwordValidation.error || '');
@@ -76,14 +76,13 @@ export default function LoginScreen() {
           category: 'auth',
           level: 'info'
         });
-        router.replace('/'); // navigate to home on success
+        router.replace('/');
       }
     } catch (err) {
       setError('Diçka shkoi keq. Ju lutem provoni përsëri.');
       Sentry.captureException(err, {
         extra: { context: 'login', email }
       });
-      console.log('Login error:', err);
     } finally {
       setLoading(false);
     }
@@ -100,20 +99,49 @@ export default function LoginScreen() {
     setResetLoading(true);
 
     try {
-      // Simulate API call - replace with actual password reset logic
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      setResetSuccess(true);
-      setTimeout(() => {
-        setShowForgotPassword(false);
-        setResetSuccess(false);
-        setPhoneNumber('');
-        setContractId('');
-      }, 2000);
-    } catch (err) {
-      setResetError('Diçka shkoi keq. Ju lutem provoni përsëri.');
+      // Format the request body as URL-encoded
+      const fullPhoneNumber = `383${phoneNumber}`;
+      const body = `PhoneNumber=${encodeURIComponent(fullPhoneNumber)}&SmsCode=${encodeURIComponent(contractId)}`;
+
+      const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/api/Account/ForgotPassword`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body,
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.item1 === 1) {
+        // Success
+        setResetSuccess(true);
+        setResetMessage(data.item2 || 'Fjalëkalimi u resetua me sukses!');
+        setTimeout(() => {
+          setShowForgotPassword(false);
+          setResetSuccess(false);
+          setResetMessage('');
+          setPhoneNumber('');
+          setContractId('');
+        }, 3000);
+      } else {
+        // API returned an error
+        setResetError(data.item2 || 'Diçka shkoi keq. Ju lutem provoni përsëri.');
+      }
+    } catch {
+      setResetError('Lidhja me serverin dështoi. Kontrolloni internetin.');
     } finally {
       setResetLoading(false);
     }
+  };
+
+  const closeResetModal = () => {
+    setShowForgotPassword(false);
+    setResetError('');
+    setResetSuccess(false);
+    setResetMessage('');
+    setPhoneNumber('');
+    setContractId('');
   };
 
   return (
@@ -197,33 +225,25 @@ export default function LoginScreen() {
         visible={showForgotPassword}
         transparent={true}
         animationType="fade"
-        onRequestClose={() => setShowForgotPassword(false)}
+        onRequestClose={closeResetModal}
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Keni harruar fjalëkalimin?!</Text>
-              <TouchableOpacity
-                onPress={() => {
-                  setShowForgotPassword(false);
-                  setResetError('');
-                  setPhoneNumber('');
-                  setContractId('');
-                }}
-                style={styles.closeButton}
-              >
+              <TouchableOpacity onPress={closeResetModal} style={styles.closeButton}>
                 <X size={24} color="#666" />
               </TouchableOpacity>
             </View>
 
             {resetSuccess ? (
               <View style={styles.successContainer}>
-                <Text style={styles.successText}>✓ Fjalëkalimi u rivendos me sukses!</Text>
+                <Text style={styles.successText}>✓ {resetMessage}</Text>
               </View>
             ) : (
               <>
                 <Text style={styles.modalDescription}>
-                  Ju lutem të shkruani numrin tuaj të telefonit!
+                  Ju lutem shkruani numrin tuaj të telefonit dhe numrin e kontratës!
                 </Text>
 
                 <View style={styles.phoneInputContainer}>
@@ -243,11 +263,12 @@ export default function LoginScreen() {
 
                 <TextInput
                   style={styles.modalInput}
-                  placeholder="Numri juaj i kontratës: ID"
+                  placeholder="Numri juaj i kontrates"
                   placeholderTextColor="#999"
                   value={contractId}
                   onChangeText={setContractId}
                   editable={!resetLoading}
+                  autoCapitalize="characters"
                 />
 
                 {resetError ? <Text style={styles.errorText}>{resetError}</Text> : null}
@@ -398,6 +419,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     fontSize: 16,
     backgroundColor: '#fff',
+    color: '#1a1a1a',
   },
   modalInput: {
     width: '100%',
@@ -409,6 +431,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     fontSize: 16,
     backgroundColor: '#fff',
+    color: '#1a1a1a',
   },
   resetButton: {
     height: 50,
@@ -431,5 +454,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#10b981',
     fontWeight: '600',
+    textAlign: 'center',
   },
 });

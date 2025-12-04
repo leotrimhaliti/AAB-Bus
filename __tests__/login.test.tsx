@@ -1,8 +1,8 @@
+import { fireEvent, render, waitFor } from '@testing-library/react-native';
+import { router } from 'expo-router';
 import React from 'react';
-import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import LoginScreen from '../app/login';
 import { useAuth } from '../contexts/AuthContext';
-import { router } from 'expo-router';
 
 // Mock dependencies
 jest.mock('../contexts/AuthContext');
@@ -21,11 +21,10 @@ describe('LoginScreen', () => {
     jest.clearAllMocks();
     mockUseAuth.mockReturnValue({
       signIn: mockSignIn,
-      signUp: jest.fn(),
       signOut: jest.fn(),
-      session: null,
       loading: false,
       profile: null,
+      isAuthenticated: false,
     });
   });
 
@@ -118,8 +117,8 @@ describe('LoginScreen', () => {
   });
 
   it('should show error message on failed login', async () => {
-    mockSignIn.mockResolvedValue({ 
-      error: { message: 'Email ose fjalëkalimi është i gabuar' } 
+    mockSignIn.mockResolvedValue({
+      error: { message: 'Email ose fjalëkalimi është i gabuar' }
     });
 
     const { getByPlaceholderText, getByText } = render(<LoginScreen />);
@@ -155,7 +154,7 @@ describe('LoginScreen', () => {
   });
 
   it('should show loading indicator during login', async () => {
-    mockSignIn.mockImplementation(() => 
+    mockSignIn.mockImplementation(() =>
       new Promise(resolve => setTimeout(() => resolve({ error: null }), 100))
     );
 

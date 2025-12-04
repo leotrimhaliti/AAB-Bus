@@ -104,8 +104,6 @@ export default function BusTrackingScreen() {
 
   const handleBusMarkerPress = useCallback((busId: string) => {
     lastMarkerPress.current = Date.now();
-    console.log('Bus marker pressed:', busId);
-
     setSelectedBus(busId);
     setIsFollowing(true);
   }, []);

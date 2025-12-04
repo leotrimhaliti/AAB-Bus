@@ -78,10 +78,8 @@ export function useBusLocations({
 
         // Sync to Supabase (insert new buses, update existing ones)
         // Don't let sync errors affect bus display
-        syncBusLocationsToSupabase(parsedData).catch(err => {
-          console.error('Background sync error:', err);
-        });
-      } catch (err: any) {
+        syncBusLocationsToSupabase(parsedData).catch(() => { });
+      } catch (err: unknown) {
         if (signal?.aborted) return;
 
         // If fetch fails, try to load from cache
@@ -92,7 +90,8 @@ export function useBusLocations({
           setLastUpdate(cached.lastUpdate);
           setError('Nuk mund të ngarkohen të dhënat e reja. Duke shfaqur të dhënat e ruajtura.');
         } else {
-          setError(err?.message ?? String(err));
+          const errorMessage = err instanceof Error ? err.message : String(err);
+          setError(errorMessage);
         }
       } finally {
         setLoading(false);
@@ -103,15 +102,13 @@ export function useBusLocations({
 
   useEffect(() => {
     attach({
-      message: (payload: any) => {
+      message: (payload: BusData) => {
         if (!payload) return;
         setData(payload);
         setError(null);
 
         // Sync WebSocket data to Supabase as well (in background)
-        syncBusLocationsToSupabase(payload).catch(err => {
-          console.error('Background sync error:', err);
-        });
+        syncBusLocationsToSupabase(payload).catch(() => { });
       },
     });
   }, [attach]);

@@ -1,10 +1,9 @@
+import { fireEvent, render, waitFor } from '@testing-library/react-native';
+import { useRouter } from 'expo-router';
+import * as SecureStore from 'expo-secure-store';
 import React from 'react';
-import { render, waitFor, fireEvent } from '@testing-library/react-native';
 import ProfileScreen from '../app/(tabs)/profile';
 import { useAuth } from '../contexts/AuthContext';
-import * as SecureStore from 'expo-secure-store';
-import { useRouter } from 'expo-router';
-import { Session } from '@supabase/supabase-js';
 
 // Mock dependencies
 jest.mock('../contexts/AuthContext');
@@ -21,23 +20,6 @@ const mockUseRouter = useRouter as jest.MockedFunction<typeof useRouter>;
 global.fetch = jest.fn();
 
 describe('ProfileScreen', () => {
-  const mockSession: Session = {
-    user: {
-      id: 'user-123',
-      email: 'test@example.com',
-      aud: 'authenticated',
-      role: 'authenticated',
-      created_at: '2025-01-01',
-      app_metadata: {},
-      user_metadata: {},
-    } as any,
-    access_token: 'mock-token',
-    expires_in: 3600,
-    expires_at: Date.now() + 3600000,
-    refresh_token: 'mock-refresh-token',
-    token_type: 'bearer' as const,
-  };
-
   const mockProfile = {
     emri: 'Test',
     mbiemri: 'User',
@@ -53,14 +35,13 @@ describe('ProfileScreen', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     mockUseAuth.mockReturnValue({
-      session: mockSession,
       signOut: mockSignOut,
       signIn: jest.fn(),
-      signUp: jest.fn(),
       loading: false,
-      profile: null,
+      profile: { email: 'test@example.com' },
+      isAuthenticated: true,
     });
 
     mockUseRouter.mockReturnValue({
@@ -105,7 +86,7 @@ describe('ProfileScreen', () => {
 
   it('should handle API fetch errors gracefully', async () => {
     const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation();
-    
+
     (global.fetch as jest.Mock).mockRejectedValueOnce(new Error('Network error'));
 
     const { getByText } = render(<ProfileScreen />);
@@ -143,16 +124,16 @@ describe('ProfileScreen', () => {
     });
   });
 
-  it('should display email from session if API fails', async () => {
+  it('should display email from profile if API fails', async () => {
     (global.fetch as jest.Mock).mockResolvedValueOnce({
       ok: false,
       json: async () => ({ error: 'Unauthorized' }),
     });
 
-    const { getByText, findByText } = render(<ProfileScreen />);
+    const { getByText } = render(<ProfileScreen />);
 
     await waitFor(() => {
-      expect(getByText(mockSession.user.email!)).toBeTruthy();
+      expect(getByText('test@example.com')).toBeTruthy();
     });
   });
 
@@ -176,7 +157,7 @@ describe('ProfileScreen', () => {
 
   it('should have accessible logout button', () => {
     const { getByLabelText } = render(<ProfileScreen />);
-    
+
     const logoutButton = getByLabelText('Dilni nga llogaria');
     expect(logoutButton).toBeTruthy();
   });
