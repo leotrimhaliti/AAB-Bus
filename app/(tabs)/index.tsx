@@ -1,10 +1,9 @@
 import LeafletMap from '@/components/LeafletMap';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { MapSkeleton } from '@/components/ui/Skeleton';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
   Animated,
-  Image,
   ScrollView,
   StyleSheet,
   Text,
@@ -13,23 +12,14 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useBusLocations } from '../../hooks/useBusLocations';
 import { useBusStops } from '../../hooks/useBusStops';
-import { useBusTracker } from '../../hooks/useBusTracker';
-import { useSimulatedBus } from '../../hooks/useSimulatedBus';
+
 
 export default function BusTrackingScreen() {
   const insets = useSafeAreaInsets();
   const [selectedBus, setSelectedBus] = useState<string | null>(null);
-  const [isFollowing, setIsFollowing] = useState(false);
-  const [busDirection, setBusDirection] = useState<{ [key: string]: 'outbound' | 'return' }>({});
-
-  // New state to hold the calculated index for the UI
-  const [currentStopIndex, setCurrentStopIndex] = useState(-1);
+  // Static list view only; no tracking state needed
 
   const lastMarkerPress = useRef<number>(0);
-
-  // **SIMULATION MODE** - Set to true to test without real buses
-  const SIMULATION_MODE = false;
-  const simulatedLocation = useSimulatedBus(SIMULATION_MODE);
 
   // Toast State
   const [toastMsg, setToastMsg] = useState('');
@@ -54,11 +44,22 @@ export default function BusTrackingScreen() {
   const { busStops, loading: busStopsLoading, error: busStopsError } = useBusStops();
   const routeStops = useMemo(() => {
     if (!busStops) return [];
-    return [...busStops].sort((a, b) => {
+    const sortedStops = [...busStops].sort((a, b) => {
       const aOrder = typeof a.stop_order === 'number' ? a.stop_order : Number.MAX_SAFE_INTEGER;
       const bOrder = typeof b.stop_order === 'number' ? b.stop_order : Number.MAX_SAFE_INTEGER;
       return aOrder - bOrder;
     });
+
+    // Add static return stop
+    sortedStops.push({
+      id: 'static-return-aab',
+      name: 'Kolegji AAB',
+      stop_order: 999,
+      lat: '0',
+      lng: '0'
+    } as any);
+
+    return sortedStops;
   }, [busStops]);
 
   const activeBuses = useMemo(() => {
@@ -86,26 +87,12 @@ export default function BusTrackingScreen() {
       heading: bus.heading,
     })).filter(b => !isNaN(b.lat) && !isNaN(b.lng));
 
-    // Add simulated bus if enabled
-    if (SIMULATION_MODE && simulatedLocation) {
-      return [
-        ...realBuses,
-        {
-          busId: 'SIM-001',
-          lat: simulatedLocation.lat,
-          lng: simulatedLocation.lng,
-          heading: simulatedLocation.heading?.toString() || '0',
-        }
-      ];
-    }
-
     return realBuses;
-  }, [activeBuses, simulatedLocation, SIMULATION_MODE]);
+  }, [activeBuses]);
 
   const handleBusMarkerPress = useCallback((busId: string) => {
     lastMarkerPress.current = Date.now();
     setSelectedBus(busId);
-    setIsFollowing(true);
   }, []);
 
   const handleMapPress = useCallback(() => {
@@ -114,21 +101,10 @@ export default function BusTrackingScreen() {
       return;
     }
     setSelectedBus(null);
-    setIsFollowing(false);
   }, []);
 
   // Get current bus location object
   const currentBusLocation = useMemo(() => {
-    // If in simulation mode and simulated bus is selected
-    if (SIMULATION_MODE && selectedBus === 'SIM-001' && simulatedLocation) {
-      return {
-        lat: simulatedLocation.lat,
-        lng: simulatedLocation.lng,
-        heading: simulatedLocation.heading,
-      };
-    }
-
-    // Otherwise use real bus data
     if (!selectedBus || !busData) return null;
     const bus = busData[selectedBus];
     if (!bus || bus.loc_valid !== '1') return null;
@@ -137,34 +113,9 @@ export default function BusTrackingScreen() {
       lng: parseFloat(bus.lng),
       heading: bus.heading ? parseFloat(bus.heading) : undefined,
     };
-  }, [selectedBus, busData, SIMULATION_MODE, simulatedLocation]);
+  }, [selectedBus, busData]);
 
-  const {
-    currentStopIndex: trackerCurrentIndex,
-    direction,
-    progress,
-    distanceAlongSegment,
-  } = useBusTracker(currentBusLocation, useMemo(() => routeStops.map(s => ({
-    ...s,
-    lat: s.latitude,
-    lng: s.longitude,
-    order: typeof s.stop_order === 'number' ? s.stop_order : 0
-  })), [routeStops]));
 
-  // Sync tracker state with local state for UI
-  useEffect(() => {
-    if (trackerCurrentIndex !== -1) {
-      setCurrentStopIndex(trackerCurrentIndex);
-      setBusDirection(prev => ({ ...prev, [selectedBus!]: direction }));
-    }
-  }, [trackerCurrentIndex, direction, selectedBus]);
-
-  // Auto-select simulated bus when in simulation mode
-  useEffect(() => {
-    if (SIMULATION_MODE && !selectedBus && simulatedLocation) {
-      setSelectedBus('SIM-001');
-    }
-  }, [SIMULATION_MODE, selectedBus, simulatedLocation]);
 
   if (isInitialLoading) {
     return (
@@ -186,18 +137,13 @@ export default function BusTrackingScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Header - Responsive with safe area */}
-      <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
-        <Text style={styles.headerTitle}> </Text>
+      {/* Map Section */}
+      <View style={styles.mapContainer}>
         {isOffline && (
-          <View style={styles.offlineBadge}>
+          <View style={[styles.offlineBadge, { top: insets.top + 10 }]}>
             <Text style={styles.offlineText}>Offline</Text>
           </View>
         )}
-      </View>
-
-      {/* Map Section */}
-      <View style={styles.mapContainer}>
         <LeafletMap
           buses={busesForMap}
           stops={routeStops}
@@ -215,111 +161,38 @@ export default function BusTrackingScreen() {
           </Text>
         </View>
 
-        {
-          selectedBus ? (
-            <ScrollView style={styles.stopsList} showsVerticalScrollIndicator={false}>
-              {(() => {
-                // Create display list with AAB at the end
-                const displayStops = [...routeStops];
-                if (displayStops.length > 0) {
-                  displayStops.push({ ...displayStops[0], id: -1, name: 'Kolegji AAB' });
-                }
+        {selectedBus ? (
+          <ScrollView style={styles.stopsList} showsVerticalScrollIndicator={false}>
+            {routeStops.map((stop, index) => {
+              const isLastStop = index === routeStops.length - 1;
+              const isFirstStop = index === 0;
 
-                return displayStops.map((stop, index) => {
-                  const isLastStop = index === displayStops.length - 1;
-
-                  let isCurrent = false;
-                  let isPassed = false;
-
-                  if (currentStopIndex !== -1) {
-                    if (index === displayStops.length - 1) {
-                      // Last appended stop
-                      isCurrent = currentStopIndex === 0 && busDirection[selectedBus!] === 'return';
-                    } else {
-                      // Normal stops
-                      if (busDirection[selectedBus!] === 'return' && currentStopIndex === 0) {
-                        isPassed = true;
-                      } else {
-                        isCurrent = currentStopIndex === index;
-                        isPassed = currentStopIndex > index;
-                        if (index === 0 && busDirection[selectedBus!] === 'return') {
-                          isCurrent = false;
-                          isPassed = true;
-                        }
-                      }
-                    }
-                  }
-
-                  return (
-                    <View key={`${stop.id}-${index}`} style={styles.stopItem}>
-                      <View style={styles.stopIndicatorContainer}>
-                        {isPassed ? (
-                          <View style={styles.stopCirclePassed} />
-                        ) : isCurrent ? (
-                          <View style={styles.stopCircleCurrent} />
-                        ) : index === 0 ? (
-                          <View style={styles.stopCircleStart} />
-                        ) : isLastStop ? (
-                          <View style={styles.stopCircleEnd} />
-                        ) : (
-                          <View style={styles.stopCircle} />
-                        )}
-                        {index < displayStops.length - 1 && (
-                          <View style={[
-                            styles.stopLine,
-                            isPassed && styles.stopLinePassed
-                          ]}>
-                            {/* Show bus icon on THIS line if this is the current stop */}
-                            {isCurrent && (
-                              <View
-                                style={{
-                                  position: 'absolute',
-                                  top: `${Math.max(5, Math.min(85, progress * 85))}%`,
-                                  left: -9,
-                                  zIndex: 100,
-                                }}
-                              >
-                                <Image
-                                  source={require('@/assets/images/aab-buss.png')}
-                                  style={styles.movingBusIcon}
-                                  resizeMode="contain"
-                                />
-                              </View>
-                            )}
-                          </View>
-                        )}
-                      </View>
-                      <View style={styles.stopContent}>
-                        <Text style={[
-                          styles.stopName,
-                          isPassed && styles.stopNamePassed,
-                          isCurrent && styles.stopNameCurrent
-                        ]}>
-                          {stop.name}
-                        </Text>
-                        {isCurrent && (
-                          <Text style={styles.currentStopLabel}>{busDirection[selectedBus!] === 'return' ? '(Kthim)' : ''}</Text>
-                        )}
-                      </View>
-                    </View>
-                  );
-
-                });
-              })()}
-            </ScrollView>
-          ) : (
-            <View style={styles.emptyState}>
-              <Image
-                source={require('@/assets/images/aab-buss.png')}
-                style={{ width: 60, height: 60, opacity: 0.3, marginBottom: 10 }}
-                resizeMode="contain"
-              />
-              <Text style={styles.emptyStateText}>
-                Autobusët aktivë shfaqen në hartë.
-              </Text>
-            </View>
-          )
-        }
+              return (
+                <View key={`${stop.id}-${index}`} style={styles.stopItem}>
+                  <View style={styles.stopIndicatorContainer}>
+                    {isFirstStop ? (
+                      <View style={styles.stopCircleStart} />
+                    ) : isLastStop ? (
+                      <View style={styles.stopCircleEnd} />
+                    ) : (
+                      <View style={styles.stopCircle} />
+                    )}
+                    {index < routeStops.length - 1 && (
+                      <View style={styles.stopLine} />
+                    )}
+                  </View>
+                  <View style={styles.stopContent}>
+                    <Text style={styles.stopName}>{stop.name}</Text>
+                  </View>
+                </View>
+              );
+            })}
+          </ScrollView>
+        ) : (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyStateText}>Zgjidhni një autobus për të parë stacionet.</Text>
+          </View>
+        )}
       </View>
 
       {/* Toast Notification */}
@@ -341,30 +214,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#f8f9fa',
   },
-  header: {
-    paddingBottom: 15,
-    paddingHorizontal: 20,
-    backgroundColor: '#c62829',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+  // Header has been removed
+  offlineBadge: {
+    position: 'absolute',
+    right: 20,
+    backgroundColor: 'rgba(198, 40, 41, 0.9)', // Red background for visibility
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    zIndex: 50,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 4,
-    zIndex: 10,
-  },
-  headerTitle: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: '700',
-  },
-  offlineBadge: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   offlineText: {
     color: '#fff',
@@ -372,177 +235,132 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   mapContainer: {
-    flex: 3,
+    flex: 2, // Map takes 2/3 of space
     position: 'relative',
+    opacity: 1,
   },
   map: {
     flex: 1,
   },
-  centerButton: {
-    position: 'absolute',
-    bottom: 20,
-    right: 20,
-    backgroundColor: '#fff',
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
   listContainer: {
-    flex: 2,
+    flex: 1,
     backgroundColor: '#fff',
-    borderTopWidth: 1,
-    borderTopColor: '#e5e5e5',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    marginTop: -24, // Overlap the map slightly
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 10,
+    zIndex: 20,
+    paddingTop: 8,
   },
   listHeader: {
-    padding: 16,
+    paddingHorizontal: 24,
+    paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-    backgroundColor: '#f9fafb',
+    borderBottomColor: '#f3f4f6',
+    alignItems: 'center',
   },
   listTitle: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
     color: '#374151',
+    letterSpacing: 0.3,
   },
   stopsList: {
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    paddingHorizontal: 24,
+    paddingTop: 8,
   },
   stopItem: {
     flexDirection: 'row',
-    marginBottom: 0,
-    minHeight: 50,
-    alignItems: 'flex-start', // Align dots and text at the top
+    minHeight: 48, // Reduced height
+    alignItems: 'flex-start',
   },
   stopIndicatorContainer: {
-    width: 24,
+    width: 32,
     alignItems: 'center',
-    marginRight: 12,
-    alignSelf: 'stretch', // Extend full height of the row
-    minHeight: 50,
+    marginRight: 16,
+    alignSelf: 'stretch',
   },
   stopCircle: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
     backgroundColor: '#fff',
     borderWidth: 2,
-    borderColor: '#d1d5db',
+    borderColor: '#9ca3af',
     zIndex: 2,
+    marginTop: 4, // Visually center with text line-height
   },
   stopCircleStart: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: '#10b981',
-    zIndex: 2,
-  },
-  stopCircleEnd: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: '#c62829',
-    zIndex: 2,
-  },
-  stopCirclePassed: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: '#e5e5e5',
-    zIndex: 2,
-  },
-  stopCircleCurrent: {
     width: 14,
     height: 14,
     borderRadius: 7,
-    backgroundColor: '#c62829',
+    backgroundColor: '#10b981',
+    borderWidth: 2,
+    borderColor: '#d1fae5',
+    zIndex: 2,
+    marginTop: 3,
+  },
+  stopCircleEnd: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: '#ef4444', // Cleaner red
     borderWidth: 2,
     borderColor: '#fee2e2',
     zIndex: 2,
-    marginLeft: -2,
+    marginTop: 3,
   },
   stopLine: {
     position: 'absolute',
-    top: 10,
-    bottom: -10,
+    top: 14, // Start from center of dot
+    bottom: -14, // Go to next center
     width: 2,
-    backgroundColor: '#e5e5e5',
-    zIndex: 10, // Higher than dots (2) so bus icon appears on top
-  },
-  stopLinePassed: {
-    backgroundColor: '#e5e5e5',
+    backgroundColor: '#e5e7eb',
+    left: 15, // Center in 32px container (16 - 1)
+    zIndex: 1, // Behind dots
   },
   stopContent: {
     flex: 1,
     paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f3f4f6',
   },
   stopName: {
     fontSize: 14,
     color: '#374151',
-    fontWeight: '500',
-    lineHeight: 14, // Match font size for tight alignment
-  },
-  stopNamePassed: {
-    color: '#9ca3af',
-  },
-  stopNameCurrent: {
-    color: '#111827',
-    fontWeight: '700',
-  },
-  currentStopLabel: {
-    fontSize: 11,
-    color: '#c62829',
-    marginTop: 2,
     fontWeight: '600',
-  },
-  nextStopLabel: {
-    fontSize: 11,
-    color: '#6b7280',
-    marginTop: 2,
-    fontWeight: '500',
-  },
-  movingBusIcon: {
-    width: 20,
-    height: 20,
-  },
-  busPositionLabel: {
-    fontSize: 10,
-    color: '#c62829',
-    fontWeight: '600',
-    marginLeft: 4,
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    paddingHorizontal: 3,
-    paddingVertical: 1,
-    borderRadius: 2,
+    lineHeight: 20,
   },
   emptyState: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    padding: 32,
   },
   emptyStateText: {
     color: '#9ca3af',
-    fontSize: 14,
+    fontSize: 16,
+    textAlign: 'center',
   },
   // Toast Styles
   toast: {
     position: 'absolute',
     bottom: 40,
     alignSelf: 'center',
-    backgroundColor: 'rgba(0,0,0,0.8)',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 20,
+    backgroundColor: '#1f2937',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 24,
     zIndex: 100,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 6,
   },
   toastText: {
     color: '#fff',
