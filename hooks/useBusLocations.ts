@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { syncBusLocationsToSupabase } from '../lib/busSync';
 import { cache } from '../lib/cache';
 import { fetchWithRetry } from '../lib/fetchWithRetry';
 import { BusData } from '../types/bus';
@@ -75,10 +74,6 @@ export function useBusLocations({
 
         // Save to cache for offline use
         await cache.saveBusLocations(parsedData);
-
-        // Sync to Supabase (insert new buses, update existing ones)
-        // Don't let sync errors affect bus display
-        syncBusLocationsToSupabase(parsedData).catch(() => { });
       } catch (err: unknown) {
         if (signal?.aborted) return;
 
@@ -106,9 +101,6 @@ export function useBusLocations({
         if (!payload) return;
         setData(payload);
         setError(null);
-
-        // Sync WebSocket data to Supabase as well (in background)
-        syncBusLocationsToSupabase(payload).catch(() => { });
       },
     });
   }, [attach]);

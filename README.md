@@ -6,137 +6,125 @@
 
 ## 📱 Overview
 
-Cross-platform mobile application for **real-time GPS tracking** of university buses. Students and staff can view live bus locations, route information, and estimated arrival times.
+Cross-platform mobile application for **real-time GPS tracking** of university buses. Students and staff can view live bus locations, route information, and schedules.
 
 ### 🎯 Key Highlights
 
-- 📍 **Live GPS Tracking** - Real-time bus location updates with 10-second polling
-- 🗺️ **Interactive Maps** - Google Maps integration with route visualization and bus following
-- 🔐 **Secure Authentication** - Dual authentication (Supabase + Faculty API)
-- 📡 **Offline Support** - Cached data for offline viewing with sync
+- 📍 **Live GPS Tracking** - Real-time bus location updates
+- 🗺️ **Interactive Maps** - Leaflet-based map with route visualization
+- 🔐 **Secure Authentication** - Supabase Auth + Faculty API integration
+- � **Bus Schedules** - View departure times and routes
 - 🌍 **Albanian Localization** - Full Albanian language support
-- ♿ **Accessibility** - WCAG compliant with screen reader support
-- 🎨 **Modern UI** - Polished interface with smooth animations
-- 🔄 **Smart Retry** - Automatic retry with exponential backoff
+- 📴 **Offline Support** - Cached data when network unavailable
 
 ---
 
 ## ✨ Features
 
-### Core Functionality
-
-| Feature | Description | Status |
-|---------|-------------|--------|
-| 🚌 Real-time Tracking | 10-second polling with live bus location updates | ✅ Active |
-| 🗺️ Route Visualization | Complete bus routes with stops and progress tracking | ✅ Active |
-| 👤 User Profiles | Faculty API integration for student/staff data | ✅ Active |
-| 🔒 Secure Auth | Token encryption with expo-secure-store | ✅ Active |
-| 📴 Offline Mode | Cached data when network unavailable | ✅ Active |
-| 🔄 Auto-refresh | Automatic polling with smart retry mechanisms | ✅ Active |
-| 🎨 Modern UI | Clean, intuitive interface with smooth animations | ✅ Active |
-| 📊 Error Tracking | Sentry integration for crash reporting | ✅ Active |
-| 📍 Bus Following | Camera follows selected bus in real-time | ✅ Active |
-| 🔑 Password Reset | Modal popup for password recovery | ✅ Active |
-| 🖼️ Image Preloading | Prevents flickering with expo-asset | ✅ Active |
+| Feature | Description |
+|---------|-------------|
+| 🚌 Real-time Tracking | Live bus location updates with polling |
+| 🗺️ Route Visualization | Bus routes with stops and progress tracking |
+| 📅 Schedule View | Bus departure times and booking system |
+| 👤 User Profiles | Student/staff profile management |
+| 🔒 Secure Auth | Token encryption with expo-secure-store |
+| 📴 Offline Mode | Cached data when network unavailable |
+|  Error Tracking | Sentry integration for crash reporting |
 
 ---
 
 ## 🛠️ Tech Stack
 
 ### Frontend
-- **Framework:** React Native 0.81.4 with Expo SDK 54
-- **Language:** TypeScript 5.9.2 (Strict mode)
-- **Navigation:** Expo Router 6.0.8
-- **Maps:** react-native-maps 1.20.1 (Google Maps)
-- **State Management:** React Context API + Custom Hooks
+- **Framework:** React Native 0.81.5 with Expo SDK 54
+- **Language:** TypeScript 5.9.2
+- **Navigation:** Expo Router 6.0
+- **Maps:** Leaflet (WebView-based)
+- **Icons:** Lucide React Native
 
 ### Backend
 - **Database:** Supabase (PostgreSQL)
-- **Real-time:** WebSocket connections
 - **Authentication:** Supabase Auth + Faculty API
 - **Storage:** Expo SecureStore (encrypted tokens)
 - **Caching:** AsyncStorage
 
 ### Development & Testing
 - **Testing:** Jest + React Native Testing Library
-- **Linting:** ESLint (Expo config)
-- **Type Checking:** TypeScript strict mode
+- **Linting:** ESLint
 - **Error Tracking:** Sentry React Native
 
 ---
 
-
 ## 🏗️ Project Structure
 
 ```
-aab-bus/
+aab/
 ├── app/                      # Application screens (Expo Router)
-│   ├── (tabs)/              # Tab navigation screens
-│   │   ├── index.tsx        # Bus tracking map
-│   │   ├── orari.tsx        # Schedule screen
-│   │   └── profile.tsx      # User profile
-│   ├── login.tsx            # Login screen
-│   └── _layout.tsx          # Root layout
-├── components/              # Reusable components
-│   ├── ui/                  # UI components
-│   │   ├── Skeleton.tsx     # Loading skeletons
-│   │   └── ...
-│   └── ErrorBoundary.tsx    # Error boundary component
-├── contexts/                # React contexts
-│   └── AuthContext.tsx      # Authentication context
-├── hooks/                   # Custom React hooks
-│   ├── useBusLocations.ts   # Bus data fetching
-│   ├── useWebSocket.ts      # WebSocket connection
-│   └── useNetworkStatus.ts  # Network monitoring
-├── lib/                     # Utility libraries
-│   ├── supabase.ts          # Supabase client
-│   ├── validation.ts        # Form validation
-│   ├── cache.ts             # Caching utilities
-│   └── fetchWithRetry.ts    # HTTP retry logic
-├── types/                   # TypeScript definitions
-│   └── bus.ts               # Bus-related types
-├── constants/               # App constants
-│   └── RouteCoordinates.ts  # Bus route data
-├── __tests__/               # Test files
-│   ├── *.test.ts(x)         # Component & unit tests
-└── package.json
+│   ├── (tabs)/               # Tab navigation screens
+│   │   ├── index.tsx         # Bus tracking map
+│   │   ├── orari.tsx         # Schedule/booking screen
+│   │   └── profile.tsx       # User profile
+│   ├── login.tsx             # Login screen
+│   └── _layout.tsx           # Root layout
+├── components/               # Reusable components
+│   ├── ui/                   # UI components (Skeleton, ErrorState, etc.)
+│   ├── LeafletMap.tsx        # Map component
+│   └── ErrorBoundary.tsx     # Error boundary
+├── contexts/                 # React contexts
+│   └── AuthContext.tsx       # Authentication context
+├── hooks/                    # Custom React hooks
+│   ├── useBusLocations.ts    # Bus data fetching
+│   ├── useBusProgress.ts     # Bus route progress tracking
+│   ├── useBusStops.ts        # Bus stops data
+│   ├── useWebSocket.ts       # WebSocket connection
+│   └── useNetworkStatus.ts   # Network monitoring
+├── lib/                      # Utility libraries
+│   ├── supabase.ts           # Supabase client
+│   ├── validation.ts         # Form validation
+│   ├── cache.ts              # Caching utilities
+│   └── fetchWithRetry.ts     # HTTP retry logic
+├── types/                    # TypeScript definitions
+├── constants/                # App constants
+└── __tests__/                # Test files
+```
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+- Node.js 18+
+- npm or yarn
+- Expo CLI
+
+### Installation
+
+```bash
+# Install dependencies
+npm install
+
+# Start development server
+npx expo start
+```
+
+### Environment Variables
+
+Create a `.env` file with:
+```
+EXPO_PUBLIC_SUPABASE_URL=your_supabase_url
+EXPO_PUBLIC_SUPABASE_ANON_KEY=your_supabase_key
+EXPO_PUBLIC_BUS_API_URL=your_bus_api_url
+EXPO_PUBLIC_API_URL=your_api_url
 ```
 
 ---
 
 ## 🧪 Testing
 
-### Unit & Integration Tests
-
+```bash
+# Run tests
+npm test
 ```
-Test Suites: 8 passed, 8 total
-Tests:       54 passed, 54 total
-Coverage:    85%+ across critical paths
-```
-
-### E2E Tests (Detox)
-
-```
-Test Suites: 5 suites (Login, Bus Tracking, Profile, Navigation, Accessibility)
-Tests:       40+ E2E tests
-Platforms:   iOS & Android
-```
-
-### Test Categories
-
-- **Unit Tests:** Validation, caching, utilities
-- **Component Tests:** Login, signup, profile, bus tracking
-- **Hook Tests:** useBusLocations, useWebSocket, useNetworkStatus
-- **Integration Tests:** Auth flow, data fetching
-- **E2E Tests:** Full user flows across iOS and Android
-
-See [e2e/README.md](e2e/README.md) for detailed E2E testing documentation.
-
-
-
-## 📝 License
-
-This project is developed for AAB University. All rights reserved.
 
 ---
 

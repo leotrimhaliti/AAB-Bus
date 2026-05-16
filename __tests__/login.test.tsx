@@ -1,4 +1,4 @@
-import { fireEvent, render, waitFor } from '@testing-library/react-native';
+﻿import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import { router } from 'expo-router';
 import React from 'react';
 import LoginScreen from '../app/login';
@@ -10,6 +10,11 @@ jest.mock('expo-router', () => ({
   router: {
     replace: jest.fn(),
   },
+}));
+
+// Mock lucide-react-native
+jest.mock('lucide-react-native', () => ({
+  X: 'X',
 }));
 
 const mockUseAuth = useAuth as jest.MockedFunction<typeof useAuth>;
@@ -154,8 +159,12 @@ describe('LoginScreen', () => {
   });
 
   it('should show loading indicator during login', async () => {
+    // Create a promise that we can resolve manually
+    let resolveSignIn;
     mockSignIn.mockImplementation(() =>
-      new Promise(resolve => setTimeout(() => resolve({ error: null }), 100))
+      new Promise(resolve => {
+        resolveSignIn = resolve;
+      })
     );
 
     const { getByPlaceholderText, getByText, UNSAFE_getByType } = render(<LoginScreen />);
@@ -174,5 +183,8 @@ describe('LoginScreen', () => {
     await waitFor(() => {
       expect(UNSAFE_getByType(ActivityIndicator)).toBeTruthy();
     });
+
+    // Resolve the promise to clean up
+    resolveSignIn({ error: null });
   });
 });

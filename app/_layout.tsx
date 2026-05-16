@@ -2,11 +2,12 @@ import { ErrorBoundary } from '@/components/ErrorBoundary';
 import SplashScreen from '@/components/SplashScreen';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
+import { logScreenView } from '@/lib/analytics';
 import { preloadImages } from '@/utils/imagePreloader';
 import * as Sentry from '@sentry/react-native';
-import { Stack, router } from 'expo-router';
+import { Stack, router, usePathname, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 const SENTRY_DSN = process.env.EXPO_PUBLIC_SENTRY_DSN;
 
@@ -68,6 +69,37 @@ function RootNavigator() {
 function RootLayout() {
   const [showSplash, setShowSplash] = useState(true);
   useFrameworkReady();
+
+  // Automatic screen tracking
+  const pathname = usePathname();
+  const segments = useSegments();
+  const previousPathRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    // Only log if the path actually changed
+    if (pathname && pathname !== previousPathRef.current) {
+      previousPathRef.current = pathname;
+
+      // Convert pathname to a readable screen name
+      // e.g., "/(tabs)" -> "Home", "/(tabs)/orari" -> "Orari", "/login" -> "Login"
+      let screenName = pathname;
+
+      if (pathname === '/' || pathname === '/(tabs)' || pathname === '/(tabs)/index') {
+        screenName = 'Home';
+      } else if (pathname.includes('/(tabs)/')) {
+        // Extract the tab name and capitalize it
+        const tabName = pathname.split('/').pop() || 'Unknown';
+        screenName = tabName.charAt(0).toUpperCase() + tabName.slice(1);
+      } else if (pathname === '/login') {
+        screenName = 'Login';
+      } else {
+        // For other paths, clean up the pathname
+        screenName = pathname.replace(/[/()\[\]]/g, '_').replace(/^_+|_+$/g, '') || 'Unknown';
+      }
+
+      logScreenView(screenName);
+    }
+  }, [pathname, segments]);
 
   return (
     <ErrorBoundary>

@@ -36,3 +36,4 @@ How do I add multiple language support (i18n)?
 How do I create animated transitions between screens?
 How do I implement geofencing to detect when user is near a stop?
 How do I add offline queue for actions when network is unavailable?
+I need a 'Wow' feature for my AAB Bus . Suggest 3 modular,self-contained features that involve data processing. Think like a Product Manager

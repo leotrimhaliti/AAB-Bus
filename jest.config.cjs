@@ -1,8 +1,8 @@
-module.exports = {
+﻿module.exports = {
   preset: 'react-native',
   testEnvironment: 'node',
   transformIgnorePatterns: [
-    'node_modules/(?!(react-native|@react-native|@react-native-community|expo|@expo|expo-.*|react-native-maps|lucide-react-native|@supabase|react-native-reanimated|react-native-url-polyfill)/)',
+    'node_modules/(?!(react-native|@react-native|@react-native-community|expo|@expo|expo-.*|react-native-maps|react-native-webview|lucide-react-native|@supabase|react-native-reanimated|react-native-url-polyfill)/)',
   ],
   setupFiles: ['<rootDir>/jest.setup.js'],
   setupFilesAfterEnv: ['@testing-library/jest-native/extend-expect'],
@@ -11,6 +11,8 @@ module.exports = {
     '^react-native-reanimated$': '<rootDir>/__mocks__/react-native-reanimated.js',
     '^@react-native-async-storage/async-storage$': '<rootDir>/__mocks__/@react-native-async-storage/async-storage.js',
     '^react-native-url-polyfill/auto$': '<rootDir>/__mocks__/react-native-url-polyfill.js',
+    '^react-native-maps$': '<rootDir>/__mocks__/react-native-maps.js',
+    '^react-native-webview$': '<rootDir>/__mocks__/react-native-webview.js',
     '^@/(.*)$': '<rootDir>/$1',
   },
   transform: {

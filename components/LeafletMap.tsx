@@ -13,6 +13,7 @@ interface BusStop {
   latitude: number;
   longitude: number;
   name: string;
+  stop_order?: number | string;
 }
 
 interface LeafletMapProps {
@@ -333,11 +334,14 @@ const LeafletMap: React.FC<LeafletMapProps> = ({
             animateMarker(overlapBus.busId, targetLat, targetLng, marker);
             
             if (overlapBus.heading) {
-              marker.setRotationAngle(parseFloat(overlapBus.heading));
+              const heading = parseFloat(overlapBus.heading);
+              if (Number.isFinite(heading) && typeof marker.setRotationAngle === 'function') {
+                marker.setRotationAngle(heading);
+              }
             }
           } else {
             // Create new marker (no animation for first appearance)
-            const marker = L.marker([targetLat, targetLng], { icon, rotationAngle: overlapBus.heading ? parseFloat(overlapBus.heading) : 0 });
+            const marker = L.marker([targetLat, targetLng], { icon });
             marker.on('click', () => {
               window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'busPress', busId: overlapBus.busId }));
             });
@@ -356,12 +360,17 @@ const LeafletMap: React.FC<LeafletMapProps> = ({
       stopMarkers.forEach(m => map.removeLayer(m));
       stopMarkers = [];
 
+      // Skip the return AAB stop on the map (hide duplicate pin)
+      const filteredStops = stops.filter((stop) => !(stop.name && stop.name.toLowerCase().includes('kthim')));
+
       // Add new stop markers with proper Leaflet markers and popups
-      stops.forEach((stop, index) => {
+      filteredStops.forEach((stop, index) => {
         const marker = L.marker([stop.latitude, stop.longitude], { icon: stopIcon });
         
         // Create popup with stop name and number
-        const popupContent = '<strong>Stacioni ' + (index + 1) + '</strong><br>' + stop.name;
+        const stopOrder = Number(stop.stop_order);
+        const displayNumber = Number.isFinite(stopOrder) ? stopOrder : (index + 1);
+        const popupContent = '<strong>Stacioni ' + displayNumber + '</strong><br>' + stop.name;
         marker.bindPopup(popupContent, {
           className: 'stop-popup',
           closeButton: false,

@@ -1,11 +1,10 @@
-// jest.setup.js
+﻿// jest.setup.js
 // Mock Reanimated is handled by Jest's moduleNameMapper
 // Add any global test setup here if needed
 
 // Set environment variables for tests
-process.env.EXPO_PUBLIC_SUPABASE_URL = 'https://test.supabase.co';
-process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY = 'test-anon-key';
 process.env.EXPO_PUBLIC_FACULTY_API_URL = 'https://test-faculty-api.com';
+process.env.EXPO_PUBLIC_API_URL = 'https://testapieservice.uniaab.com';
 
 // Polyfill for import.meta
 global.import = { meta: { url: '', env: {} } };
@@ -34,32 +33,7 @@ jest.mock('@sentry/react-native', () => ({
   init: jest.fn(),
   captureException: jest.fn(),
   captureMessage: jest.fn(),
-}));
-
-// Mock @supabase/supabase-js
-jest.mock('@supabase/supabase-js', () => ({
-  createClient: jest.fn(() => ({
-    auth: {
-      signUp: jest.fn(),
-      signInWithPassword: jest.fn(),
-      signOut: jest.fn(),
-      getSession: jest.fn(() => Promise.resolve({ data: { session: null }, error: null })),
-      onAuthStateChange: jest.fn(() => ({
-        data: { subscription: { unsubscribe: jest.fn() } },
-      })),
-    },
-    from: jest.fn(() => ({
-      select: jest.fn(() => ({
-        eq: jest.fn(() => ({
-          single: jest.fn(() => Promise.resolve({ data: null, error: null })),
-        })),
-      })),
-      update: jest.fn(() => ({
-        eq: jest.fn(() => Promise.resolve({ data: null, error: null })),
-      })),
-      insert: jest.fn(() => Promise.resolve({ data: null, error: null })),
-    })),
-  })),
+  addBreadcrumb: jest.fn(),
 }));
 
 // Mock @expo/vector-icons
@@ -69,55 +43,27 @@ jest.mock('@expo/vector-icons', () => ({
   FontAwesome: 'FontAwesome',
 }));
 
-// Mock global fetch
-global.fetch = jest.fn(() =>
-  Promise.resolve({
-    ok: true,
-    json: () => Promise.resolve({}),
-  })
-);
-
-// Mock @react-native-community/netinfo
-jest.mock('@react-native-community/netinfo', () => ({
-  addEventListener: jest.fn(() => jest.fn()),
-  fetch: jest.fn(() => Promise.resolve({
-    isConnected: true,
-    isInternetReachable: true,
-  })),
-}));
-
-// Mock Sentry
-jest.mock('@sentry/react-native', () => ({
-  init: jest.fn(),
-  captureException: jest.fn(),
-  captureMessage: jest.fn(),
-}));
-
-// Mock @supabase/supabase-js
-jest.mock('@supabase/supabase-js', () => ({
-  createClient: jest.fn(() => ({
-    auth: {
-      signUp: jest.fn(),
-      signInWithPassword: jest.fn(),
-      signOut: jest.fn(),
-      getSession: jest.fn(() => Promise.resolve({ data: { session: null }, error: null })),
-      onAuthStateChange: jest.fn(() => ({
-        data: { subscription: { unsubscribe: jest.fn() } },
-      })),
+// Mock react-native-safe-area-context
+// This fixes "No safe area value available" errors in tests
+jest.mock('react-native-safe-area-context', () => {
+  const insets = { top: 0, right: 0, bottom: 0, left: 0 };
+  const frame = { x: 0, y: 0, width: 375, height: 812 };
+  
+  return {
+    SafeAreaProvider: ({ children }) => children,
+    SafeAreaView: ({ children }) => children,
+    SafeAreaInsetsContext: {
+      Consumer: ({ children }) => children(insets),
+      Provider: ({ children }) => children,
     },
-    from: jest.fn(() => ({
-      select: jest.fn(() => ({
-        eq: jest.fn(() => ({
-          single: jest.fn(() => Promise.resolve({ data: null, error: null })),
-        })),
-      })),
-      update: jest.fn(() => ({
-        eq: jest.fn(() => Promise.resolve({ data: null, error: null })),
-      })),
-      insert: jest.fn(() => Promise.resolve({ data: null, error: null })),
-    })),
-  })),
-}));
+    useSafeAreaInsets: () => insets,
+    useSafeAreaFrame: () => frame,
+    initialWindowMetrics: {
+      insets,
+      frame,
+    },
+  };
+});
 
 // Mock global fetch
 global.fetch = jest.fn(() =>
@@ -126,4 +72,3 @@ global.fetch = jest.fn(() =>
     json: () => Promise.resolve({}),
   })
 );
-

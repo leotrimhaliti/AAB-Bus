@@ -14,8 +14,6 @@ function getEnvVar(key: string): string | undefined {
 
 export const Config = {
     GOOGLE_MAPS_API_KEY: getEnvVar('GOOGLE_MAPS_API_KEY') || '',
-    SUPABASE_URL: getEnvVar('EXPO_PUBLIC_SUPABASE_URL'),
-    SUPABASE_ANON_KEY: getEnvVar('EXPO_PUBLIC_SUPABASE_ANON_KEY'),
     BUS_API_URL: getEnvVar('EXPO_PUBLIC_BUS_API_URL'),
     API_URL: getEnvVar('EXPO_PUBLIC_API_URL'),
     SENTRY_DSN: getEnvVar('EXPO_PUBLIC_SENTRY_DSN'),
@@ -25,7 +23,6 @@ export const Config = {
 if (__DEV__) {
     console.log('📋 Config loaded:', {
         GOOGLE_MAPS_API_KEY: Config.GOOGLE_MAPS_API_KEY ? '✅ Loaded' : '❌ Missing',
-        SUPABASE_URL: Config.SUPABASE_URL ? '✅ Loaded' : '❌ Missing',
         BUS_API_URL: Config.BUS_API_URL ? '✅ Loaded' : '❌ Missing',
     });
 }

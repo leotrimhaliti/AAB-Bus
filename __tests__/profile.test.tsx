@@ -1,4 +1,4 @@
-import { fireEvent, render, waitFor } from '@testing-library/react-native';
+﻿import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import { useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import React from 'react';
@@ -55,9 +55,17 @@ describe('ProfileScreen', () => {
     mockSecureStore.getItemAsync.mockResolvedValue('mock-access-token');
   });
 
-  it('should render profile screen', () => {
+  it('should render profile screen', async () => {
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: true,
+      json: async () => mockProfile,
+    });
+
     const { getByText } = render(<ProfileScreen />);
-    expect(getByText('Detajet Personale')).toBeTruthy();
+
+    await waitFor(() => {
+      expect(getByText('Profili im')).toBeTruthy();
+    });
   });
 
   it('should fetch and display profile data from API', async () => {
@@ -85,37 +93,38 @@ describe('ProfileScreen', () => {
   });
 
   it('should handle API fetch errors gracefully', async () => {
-    const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation();
-
     (global.fetch as jest.Mock).mockRejectedValueOnce(new Error('Network error'));
 
     const { getByText } = render(<ProfileScreen />);
 
     await waitFor(() => {
-      expect(consoleLogSpy).toHaveBeenCalledWith(
-        'Error fetching faculty API:',
-        expect.any(Error)
-      );
+      expect(getByText('Gabim gjatë ngarkimit të të dhënave të profilit.')).toBeTruthy();
     });
-
-    consoleLogSpy.mockRestore();
   });
 
   it('should display placeholder when no profile data', async () => {
     mockSecureStore.getItemAsync.mockResolvedValue(null);
 
-    const { getAllByText } = render(<ProfileScreen />);
+    const { getByText } = render(<ProfileScreen />);
 
     await waitFor(() => {
-      const placeholders = getAllByText('Nuk ka të dhëna');
-      expect(placeholders.length).toBeGreaterThan(0);
+      expect(getByText('Nuk ka token të aksesit.')).toBeTruthy();
     });
   });
 
   it('should call signOut and navigate to login on logout', async () => {
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: true,
+      json: async () => mockProfile,
+    });
+
     const { getByText } = render(<ProfileScreen />);
 
-    const logoutButton = getByText('Çkyçu (Log Out)');
+    await waitFor(() => {
+      expect(getByText('Test User')).toBeTruthy();
+    });
+
+    const logoutButton = getByText('Dil nga llogaria');
     fireEvent.press(logoutButton);
 
     await waitFor(() => {
@@ -127,13 +136,14 @@ describe('ProfileScreen', () => {
   it('should display email from profile if API fails', async () => {
     (global.fetch as jest.Mock).mockResolvedValueOnce({
       ok: false,
+      status: 401,
       json: async () => ({ error: 'Unauthorized' }),
     });
 
     const { getByText } = render(<ProfileScreen />);
 
     await waitFor(() => {
-      expect(getByText('test@example.com')).toBeTruthy();
+      expect(getByText('Gabim gjatë ngarkimit të të dhënave të profilit.')).toBeTruthy();
     });
   });
 
@@ -155,10 +165,17 @@ describe('ProfileScreen', () => {
     });
   });
 
-  it('should have accessible logout button', () => {
+  it('should have accessible logout button', async () => {
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: true,
+      json: async () => mockProfile,
+    });
+
     const { getByLabelText } = render(<ProfileScreen />);
 
-    const logoutButton = getByLabelText('Dilni nga llogaria');
-    expect(logoutButton).toBeTruthy();
+    await waitFor(() => {
+      const logoutButton = getByLabelText('Dilni nga llogaria');
+      expect(logoutButton).toBeTruthy();
+    });
   });
 });
