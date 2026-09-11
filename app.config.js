@@ -22,19 +22,13 @@ export default {
       supportsTablet: true,
       bundleIdentifier: "com.favoriteprojects.aabbus",
       config: {
-        usesNonExemptEncryption: false,
-        googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY
+        usesNonExemptEncryption: false
       },
     },
 
     android: {
       package: "com.favoriteprojects.aabbus",
       googleServicesFile: process.env.GOOGLE_SERVICES_JSON || "./google-services.json",
-      config: {
-        googleMaps: {
-          apiKey: process.env.GOOGLE_MAPS_API_KEY
-        }
-      }
     },
 
     plugins: [
@@ -58,8 +52,6 @@ export default {
     },
 
     extra: {
-      EXPO_PUBLIC_MAPTILER_API_KEY: process.env.EXPO_PUBLIC_MAPTILER_API_KEY,
-      GOOGLE_MAPS_API_KEY: process.env.GOOGLE_MAPS_API_KEY,
       EXPO_PUBLIC_BUS_API_URL: process.env.EXPO_PUBLIC_BUS_API_URL,
       EXPO_PUBLIC_API_URL: process.env.EXPO_PUBLIC_API_URL,
       EXPO_PUBLIC_SENTRY_DSN: process.env.EXPO_PUBLIC_SENTRY_DSN,

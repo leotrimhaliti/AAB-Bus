@@ -36,7 +36,7 @@ components/ui/          ErrorState, Skeleton
 contexts/AuthContext.tsx  Login, logout, token refresh, session state
 hooks/                  useBusLocations, useBusProgress, useBusStops,
                         useNetworkStatus, useWebSocket
-lib/                    config, validation, cache, fetchWithRetry,
+lib/                    validation, cache, fetchWithRetry,
                         busFreshness, analytics
 types/                  Shared TypeScript types
 __tests__/              Jest test suites
@@ -55,12 +55,12 @@ cp .env.example .env
 Fill in `.env`:
 
 ```
-GOOGLE_MAPS_API_KEY=...
-EXPO_PUBLIC_API_URL=...          # faculty API: auth + profile
-EXPO_PUBLIC_BUS_API_URL=...      # GPS bus-location endpoint
-EXPO_PUBLIC_MAPTILER_API_KEY=... # map tiles
-EXPO_PUBLIC_SENTRY_DSN=...       # optional, error tracking
+EXPO_PUBLIC_API_URL=...      # faculty API: auth + profile
+EXPO_PUBLIC_BUS_API_URL=...  # GPS bus-location endpoint
+EXPO_PUBLIC_SENTRY_DSN=...   # optional, error tracking
 ```
+
+Map tiles come straight from OpenStreetMap inside the Leaflet WebView (`components/LeafletMap.tsx`), so no maps API key is needed.
 
 `EXPO_PUBLIC_API_URL` and `EXPO_PUBLIC_BUS_API_URL` are read directly in code (`contexts/AuthContext.tsx`, `app/(tabs)/index.tsx`). Without them, login and the live map won't work. Bus stops are a fixed list in `hooks/useBusStops.ts`, so the schedule and route screens work without a backend.
 
