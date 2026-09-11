@@ -328,7 +328,7 @@ export default function BusTrackingScreen() {
       <View style={styles.mapContainer}>
         {isOffline && (
           <View style={[styles.offlineBadge, { top: insets.top + 10 }]}>
-            <Text style={styles.offlineText}>Offline</Text>
+            <Text style={styles.offlineText}>Jeni offline</Text>
           </View>
         )}
         <LeafletMap

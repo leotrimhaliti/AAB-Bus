@@ -13,7 +13,7 @@ interface ErrorStateProps {
 export function ErrorState({
   title = 'Gabim',
   message,
-  retryLabel = 'Provo Përsëri',
+  retryLabel = 'Provo përsëri',
   onRetry,
   icon = 'alert-circle-outline',
 }: ErrorStateProps) {

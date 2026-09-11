@@ -76,8 +76,10 @@ describe('BusTrackingScreen', () => {
     });
 
     const { getByText } = render(<BusTrackingScreen />);
-    
-    expect(getByText('Network error occurred')).toBeTruthy();
+
+    // The screen shows a friendly generic message instead of the raw hook
+    // error (it never renders `error` directly), so assert on that.
+    expect(getByText('Nuk u mund të ngarkohen të dhënat.')).toBeTruthy();
     const retryButton = getByText('Provo përsëri');
     expect(retryButton).toBeTruthy();
     
@@ -100,9 +102,11 @@ describe('BusTrackingScreen', () => {
     });
 
     const { getByText } = render(<BusTrackingScreen />);
-    
+
+    // The stop timeline only mounts after a bus marker is pressed; with data
+    // loaded but no bus selected yet, the picker header is what's visible.
     await waitFor(() => {
-      expect(getByText('Stacionet e Linjës')).toBeTruthy();
+      expect(getByText('Zgjidhni një autobus')).toBeTruthy();
     });
   });
 
