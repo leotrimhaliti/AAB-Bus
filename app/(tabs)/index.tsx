@@ -2,6 +2,7 @@ import { BusTripTimeline } from '@/components/BusTripTimeline';
 import LeafletMap from '@/components/LeafletMap';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { MapSkeleton } from '@/components/ui/Skeleton';
+import { isBusPositionStale } from '@/lib/busFreshness';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
@@ -36,6 +37,14 @@ export default function BusTrackingScreen() {
   // Toast State
   const [toastMsg, setToastMsg] = useState('');
   const toastOpacity = useRef(new Animated.Value(0)).current;
+
+  // Ticks independently of data refresh so a position can age into "stale"
+  // even if the bus stops reporting and no new poll response arrives.
+  const [nowTick, setNowTick] = useState(() => Date.now());
+  useEffect(() => {
+    const interval = setInterval(() => setNowTick(Date.now()), 5000);
+    return () => clearInterval(interval);
+  }, []);
 
   const restUrl = process.env.EXPO_PUBLIC_BUS_API_URL!;
   const wsUrl = null;
@@ -155,10 +164,11 @@ export default function BusTrackingScreen() {
       lat: parseFloat(bus.lat),
       lng: parseFloat(bus.lng),
       heading: bus.heading,
+      stale: isBusPositionStale(bus, nowTick),
     })).filter(b => !isNaN(b.lat) && !isNaN(b.lng));
 
     return realBuses;
-  }, [activeBuses]);
+  }, [activeBuses, nowTick]);
 
   const handleBusMarkerPress = useCallback((busId: string) => {
     lastMarkerPress.current = Date.now();
@@ -207,6 +217,15 @@ export default function BusTrackingScreen() {
       heading: bus.heading ? parseFloat(bus.heading) : undefined,
     };
   }, [timelineBusId, busData]);
+
+  // A position older than the threshold is shown as "last known" rather
+  // than live — see lib/busFreshness.ts.
+  const isSelectedBusStale = useMemo(() => {
+    if (!timelineBusId || !busData) return false;
+    const bus = busData[timelineBusId];
+    if (!bus) return false;
+    return isBusPositionStale(bus, nowTick);
+  }, [timelineBusId, busData, nowTick]);
 
   // Calculate progress (next stop index)
   const currentStopIndex = useBusProgress(timelineBusId, busData, routeStops);
@@ -361,6 +380,7 @@ export default function BusTrackingScreen() {
               routePosition={routePosition}
               busId={timelineBusId}
               isOffline={isOffline}
+              isStale={isSelectedBusStale}
             />
           </Animated.ScrollView>
         ) : null}

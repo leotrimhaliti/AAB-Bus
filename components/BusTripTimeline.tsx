@@ -8,15 +8,22 @@ interface BusTripTimelineProps {
   routePosition?: number;
   busId?: string;
   isOffline?: boolean;
+  /** True once the bus's last reported position is older than the
+   * freshness threshold (see lib/busFreshness.ts) — it's no longer live. */
+  isStale?: boolean;
 }
 
 export const BusTripTimeline: React.FC<BusTripTimelineProps> = ({
   routeStops,
+  isStale = false,
 }) => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Stacionet e Autobusit</Text>
+        {isStale && (
+          <Text style={styles.staleBadge}>Pozicioni i fundit i njohur</Text>
+        )}
       </View>
 
       <View style={styles.timelineContainer}>
@@ -66,6 +73,17 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: '700',
     color: '#374151',
+  },
+  staleBadge: {
+    marginTop: 6,
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#b45309',
+    backgroundColor: '#fef3c7',
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 999,
+    overflow: 'hidden',
   },
   timelineContainer: {
     position: 'relative',

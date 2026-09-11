@@ -7,6 +7,9 @@ interface BusData {
   lng: number;
   busId: string;
   heading?: string;
+  /** True once this position is older than the freshness threshold —
+   * rendered dimmed, without the "live" pulse. */
+  stale?: boolean;
 }
 
 interface BusStop {
@@ -115,6 +118,13 @@ const LeafletMap: React.FC<LeafletMapProps> = ({
     .bus-marker.selected {
       animation: pulse 1.5s infinite;
     }
+    .bus-marker.stale {
+      opacity: 0.55;
+      filter: grayscale(70%);
+    }
+    .bus-marker.stale.selected {
+      animation: none;
+    }
     .bus-marker img {
       width: 40px;
       height: 40px;
@@ -131,6 +141,21 @@ const LeafletMap: React.FC<LeafletMapProps> = ({
       height: 18px;
       font-size: 11px;
       font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid white;
+    }
+    .bus-marker .stale-badge {
+      position: absolute;
+      bottom: -4px;
+      right: -4px;
+      background: #d97706;
+      color: white;
+      border-radius: 50%;
+      width: 16px;
+      height: 16px;
+      font-size: 10px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -203,10 +228,11 @@ const LeafletMap: React.FC<LeafletMapProps> = ({
     const busIconUrl = 'https://eservice.aab-edu.net/assets/images/aab-buss.png';
     
     // Bus icon HTML with AAB logo
-    const busIconHtml = (isSelected, count = 1) => \`
-      <div class="bus-marker \${isSelected ? 'selected' : ''}">
+    const busIconHtml = (isSelected, count = 1, isStale = false) => \`
+      <div class="bus-marker \${isSelected ? 'selected' : ''} \${isStale ? 'stale' : ''}">
         <img src="\${busIconUrl}" alt="AAB Bus" style="width: 40px; height: 40px; object-fit: contain;" />
         \${count > 1 ? \`<span class="bus-count">\${count}</span>\` : ''}
+        \${isStale ? '<span class="stale-badge" title="Pozicioni i fundit i njohur">&#128337;</span>' : ''}
       </div>
     \`;
 
@@ -316,7 +342,7 @@ const LeafletMap: React.FC<LeafletMapProps> = ({
           const offset = getOffset(i, overlapping.length);
           const isSelected = overlapBus.busId === selectedBusId;
           const icon = L.divIcon({
-            html: busIconHtml(isSelected),
+            html: busIconHtml(isSelected, 1, !!overlapBus.stale),
             className: '',
             iconSize: [44, 44],
             iconAnchor: [22, 22]
