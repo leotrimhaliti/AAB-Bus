@@ -106,7 +106,7 @@
 
     <rect x="780" y="482" width="152" height="94" rx="10" class="chip"/>
     <text x="856" y="514" class="ct">Të jashtme</text>
-    <text x="856" y="532" class="cs">MapTiler · Google Maps</text>
+    <text x="856" y="532" class="cs">OpenStreetMap (Leaflet)</text>
     <text x="856" y="547" class="cs">Sentry · Firebase</text>
   </g>
 </svg>

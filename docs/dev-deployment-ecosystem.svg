@@ -104,8 +104,8 @@
     <path d="M0,26 C-12,10 -12,-2 0,-2 C12,-2 12,10 0,26 Z" fill="#1d4ed8"/>
     <circle cx="0" cy="9" r="4" fill="#fff"/>
   </g>
-  <text x="655" y="452" class="svc">Google Maps</text>
-  <text x="655" y="466" class="svcsub">Hartat</text>
+  <text x="655" y="452" class="svc">OpenStreetMap</text>
+  <text x="655" y="466" class="svcsub">Pllakat e hartës (Leaflet)</text>
 
   <!-- activity -->
   <g transform="translate(760,412)">

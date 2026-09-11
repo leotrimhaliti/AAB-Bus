@@ -4,7 +4,7 @@
 - Follow ECC v1.8 rules in .claude/rules
 
 ## Tech Stack
-- React Native, Expo, Supabase
+- React Native, Expo, TypeScript
 
 ## Context
 - This is an existing project. Before making changes, run `/update-codemaps` to index the files.
