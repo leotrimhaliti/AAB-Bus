@@ -1,0 +1,124 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 600" font-family="Segoe UI, Arial, sans-serif">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#1d4ed8"/>
+    </marker>
+  </defs>
+  <style>
+    .flow { stroke:#1d4ed8; stroke-width:3; fill:none; marker-end:url(#a); }
+    .flow2 { stroke:#1d4ed8; stroke-width:3; fill:none; marker-end:url(#a); marker-start:url(#a); }
+    .card { fill:#ffffff; stroke:#cdd9ea; stroke-width:1.5; }
+    .sec { font-size:15px; font-weight:700; fill:#1d3a5f; }
+    .cap { font-size:12.5px; font-weight:700; fill:#5b6b7f; text-anchor:middle; }
+    .node { font-size:12px; font-weight:700; fill:#1f2937; text-anchor:middle; }
+    .sub { font-size:10.5px; fill:#6b7280; text-anchor:middle; }
+    .svc { font-size:10.5px; font-weight:700; fill:#334155; text-anchor:middle; }
+    .svcsub { font-size:9.5px; fill:#6b7280; text-anchor:middle; }
+  </style>
+
+  <rect x="2" y="2" width="996" height="596" rx="24" fill="#e8f0fb"/>
+  <text x="500" y="64" text-anchor="middle" font-size="30" font-weight="800" fill="#0f2c4c" letter-spacing="1">EKOSISTEMI I ZHVILLIMIT DHE DEPLOJIMIT</text>
+
+  <!-- ===== 3.1 Frontend ===== -->
+  <text x="40" y="116" class="sec">3.1 React Native dhe Expo</text>
+  <rect x="40" y="126" width="300" height="150" rx="14" class="card"/>
+  <g transform="translate(160,150)">
+    <rect x="-16" y="0" width="32" height="52" rx="6" fill="none" stroke="#0f2c4c" stroke-width="3"/>
+    <line x1="-6" y1="7" x2="6" y2="7" stroke="#0f2c4c" stroke-width="3"/>
+  </g>
+  <text x="205" y="182" font-size="15" font-weight="800" fill="#0f2c4c">Expo</text>
+  <text x="190" y="252" class="cap">Ndërfaqja Frontend</text>
+
+  <!-- ===== 3.2 TypeScript / logic ===== -->
+  <text x="40" y="312" class="sec">3.2 TypeScript dhe Logjika</text>
+  <rect x="40" y="322" width="300" height="150" rx="14" class="card"/>
+  <g transform="translate(150,352)">
+    <rect x="-22" y="-6" width="52" height="52" rx="8" fill="#3178c6"/>
+    <text x="4" y="30" font-size="22" font-weight="800" fill="#fff" text-anchor="middle">TS</text>
+  </g>
+  <text x="220" y="384" font-size="14" font-weight="700" fill="#1f2937">React Hooks</text>
+  <text x="190" y="448" class="cap">Gjuha &amp; Logjika e Aplikacionit</text>
+
+  <!-- ===== 3.3 Pipeline ===== -->
+  <text x="372" y="116" class="sec">3.3 GitHub, EAS Build dhe Shpërndarja</text>
+  <rect x="372" y="126" width="470" height="180" rx="14" class="card"/>
+
+  <!-- Git node -->
+  <g transform="translate(430,178)">
+    <circle cx="0" cy="-8" r="6" fill="#0f2c4c"/><circle cx="0" cy="20" r="6" fill="#0f2c4c"/><circle cx="22" cy="6" r="6" fill="#0f2c4c"/>
+    <path d="M0,-2 L0,14 M0,6 C0,0 8,4 16,6" stroke="#0f2c4c" stroke-width="3" fill="none"/>
+  </g>
+  <text x="437" y="238" class="node">Git Repository</text>
+
+  <!-- Actions node -->
+  <g transform="translate(600,178)">
+    <circle cx="8" cy="6" r="18" fill="none" stroke="#1d4ed8" stroke-width="3"/>
+    <path d="M0,6 l6,7 l12,-15" stroke="#1d4ed8" stroke-width="3" fill="none"/>
+  </g>
+  <text x="608" y="238" class="node">GitHub Actions</text>
+  <text x="608" y="253" class="sub">(Automatizimi)</text>
+
+  <!-- EAS node -->
+  <g transform="translate(765,182)">
+    <path d="M8,-14 L28,20 L-12,20 Z" fill="#111111"/>
+  </g>
+  <text x="773" y="238" class="node">EAS Build</text>
+  <text x="773" y="253" class="sub">(Build në Cloud)</text>
+
+  <path class="flow" d="M470,190 L560,190"/>
+  <path class="flow" d="M640,190 L735,190"/>
+
+  <!-- ===== Device ===== -->
+  <rect x="864" y="150" width="120" height="150" rx="14" class="card"/>
+  <g transform="translate(924,178)">
+    <rect x="-20" y="0" width="40" height="66" rx="8" fill="none" stroke="#0f2c4c" stroke-width="3"/>
+    <line x1="-7" y1="8" x2="7" y2="8" stroke="#0f2c4c" stroke-width="3"/>
+    <circle cx="0" cy="56" r="3" fill="#0f2c4c"/>
+  </g>
+  <text x="924" y="270" class="cap">Pajisja e</text>
+  <text x="924" y="286" class="cap">Studentit</text>
+
+  <!-- ===== External services ===== -->
+  <rect x="372" y="330" width="470" height="210" rx="14" class="card"/>
+  <path d="M372,344 a14,14 0 0 1 14,-14 h442 a14,14 0 0 1 14,14 v26 h-470 z" fill="#dbe8f7"/>
+  <text x="607" y="362" text-anchor="middle" font-size="15" font-weight="800" fill="#0f2c4c">Shërbimet e Jashtme</text>
+
+  <!-- lock -->
+  <g transform="translate(430,410)">
+    <rect x="-14" y="0" width="28" height="20" rx="4" fill="#1d4ed8"/>
+    <path d="M-8,0 v-7 a8,8 0 0 1 16,0 v7" fill="none" stroke="#1d4ed8" stroke-width="3"/>
+  </g>
+  <text x="430" y="452" class="svc">API i Fakultetit</text>
+  <text x="430" y="466" class="svcsub">Autentikimi</text>
+
+  <!-- clock -->
+  <g transform="translate(540,410)">
+    <circle cx="0" cy="8" r="14" fill="none" stroke="#1d4ed8" stroke-width="3"/>
+    <path d="M0,8 L0,0 M0,8 L8,12" stroke="#1d4ed8" stroke-width="3" fill="none"/>
+  </g>
+  <text x="540" y="452" class="svc">API GPS</text>
+  <text x="540" y="466" class="svcsub">Të dhënat Real-time</text>
+
+  <!-- map pin -->
+  <g transform="translate(655,406)">
+    <path d="M0,26 C-12,10 -12,-2 0,-2 C12,-2 12,10 0,26 Z" fill="#1d4ed8"/>
+    <circle cx="0" cy="9" r="4" fill="#fff"/>
+  </g>
+  <text x="655" y="452" class="svc">Google Maps</text>
+  <text x="655" y="466" class="svcsub">Hartat</text>
+
+  <!-- activity -->
+  <g transform="translate(760,412)">
+    <path d="M-16,8 h8 l5,-14 l7,22 l5,-10 h8" fill="none" stroke="#1d4ed8" stroke-width="3"/>
+  </g>
+  <text x="765" y="452" class="svc">Sentry</text>
+  <text x="765" y="466" class="svcsub">Monitorimi</text>
+
+  <!-- ===== Flows ===== -->
+  <path class="flow" d="M340,196 C356,196 356,190 372,190"/>
+  <path class="flow" d="M340,392 C356,392 356,250 372,250"/>
+  <path class="flow2" d="M340,410 C356,410 356,430 372,430"/>
+  <path class="flow" d="M818,180 C842,180 842,200 864,205"/>
+  <path class="flow2" d="M842,420 C900,420 924,360 924,300"/>
+  <path class="flow2" d="M607,306 L607,330"/>
+</svg>

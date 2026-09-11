@@ -1,0 +1,112 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 620" font-family="Segoe UI, Arial, sans-serif">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#64748b"/>
+    </marker>
+  </defs>
+  <style>
+    .band { stroke-width:2; }
+    .tab { font-size:13px; font-weight:800; fill:#ffffff; text-anchor:middle; }
+    .chip { fill:#ffffff; stroke:#cbd5e1; stroke-width:1.2; }
+    .ct { font-size:11.5px; font-weight:800; fill:#1f2937; text-anchor:middle; }
+    .cs { font-size:9.5px; fill:#6b7280; text-anchor:middle; }
+    .flow { stroke:#64748b; stroke-width:2.5; fill:none; marker-end:url(#a); marker-start:url(#a); }
+    .fl { font-size:9.5px; fill:#64748b; text-anchor:middle; }
+  </style>
+
+  <rect x="2" y="2" width="996" height="616" rx="24" fill="#eef2f8"/>
+  <text x="500" y="52" text-anchor="middle" font-size="24" font-weight="800" fill="#0f2c4c">Figura 3 — Arkitektura Tre-Shtresore e Sistemit</text>
+
+  <!-- ===== TIER 1: Presentation ===== -->
+  <rect x="36" y="80" width="928" height="150" rx="16" class="band" fill="#e8f0fd" stroke="#2563eb"/>
+  <path d="M36,96 a16,16 0 0 1 16,-16 h134 v150 h-134 a16,16 0 0 1 -16,-16 z" fill="#2563eb"/>
+  <text x="119" y="148" class="tab">SHTRESA E</text>
+  <text x="119" y="168" class="tab">PREZANTIMIT</text>
+
+  <g>
+    <rect x="204" y="108" width="232" height="94" rx="10" class="chip"/>
+    <text x="320" y="140" class="ct">Ekranet (Expo Router)</text>
+    <text x="320" y="158" class="cs">login · harta · orari · profili</text>
+    <text x="320" y="173" class="cs">navigimi me tabs</text>
+
+    <rect x="452" y="108" width="232" height="94" rx="10" class="chip"/>
+    <text x="568" y="140" class="ct">Komponentët UI</text>
+    <text x="568" y="158" class="cs">LeafletMap · BusTripTimeline</text>
+    <text x="568" y="173" class="cs">SplashScreen</text>
+
+    <rect x="700" y="108" width="232" height="94" rx="10" class="chip"/>
+    <text x="816" y="140" class="ct">Gjendjet &amp; UX</text>
+    <text x="816" y="158" class="cs">Skeleton · ErrorState</text>
+    <text x="816" y="173" class="cs">ErrorBoundary · toast</text>
+  </g>
+
+  <!-- arrows 1<->2 -->
+  <path class="flow" d="M320,230 L320,262"/>
+  <path class="flow" d="M700,230 L700,262"/>
+  <text x="510" y="250" class="fl">props · thirrje funksionesh  /  gjendje · të dhëna</text>
+
+  <!-- ===== TIER 2: Business logic ===== -->
+  <rect x="36" y="262" width="928" height="160" rx="16" class="band" fill="#e7f6ec" stroke="#16a34a"/>
+  <path d="M36,278 a16,16 0 0 1 16,-16 h134 v160 h-134 a16,16 0 0 1 -16,-16 z" fill="#16a34a"/>
+  <text x="119" y="335" class="tab">SHTRESA E</text>
+  <text x="119" y="355" class="tab">LOGJIKËS</text>
+
+  <g>
+    <rect x="204" y="288" width="176" height="108" rx="10" class="chip"/>
+    <text x="292" y="318" class="ct">AuthContext</text>
+    <text x="292" y="336" class="cs">kyçja · logout</text>
+    <text x="292" y="350" class="cs">token refresh</text>
+    <text x="292" y="364" class="cs">sesioni</text>
+
+    <rect x="396" y="288" width="176" height="108" rx="10" class="chip"/>
+    <text x="484" y="318" class="ct">Hooks e biznesit</text>
+    <text x="484" y="336" class="cs">useBusLocations</text>
+    <text x="484" y="350" class="cs">useBusProgress</text>
+    <text x="484" y="364" class="cs">useBusStops</text>
+
+    <rect x="588" y="288" width="176" height="108" rx="10" class="chip"/>
+    <text x="676" y="318" class="ct">Rrjeti</text>
+    <text x="676" y="336" class="cs">fetchWithRetry</text>
+    <text x="676" y="350" class="cs">useNetworkStatus</text>
+    <text x="676" y="364" class="cs">useWebSocket</text>
+
+    <rect x="780" y="288" width="152" height="108" rx="10" class="chip"/>
+    <text x="856" y="318" class="ct">Utilitete</text>
+    <text x="856" y="336" class="cs">validation</text>
+    <text x="856" y="350" class="cs">cache · config</text>
+    <text x="856" y="364" class="cs">analytics</text>
+  </g>
+
+  <!-- arrows 2<->3 -->
+  <path class="flow" d="M320,422 L320,454"/>
+  <path class="flow" d="M700,422 L700,454"/>
+  <text x="510" y="442" class="fl">HTTP requests · read/write  /  përgjigje JSON · cache</text>
+
+  <!-- ===== TIER 3: Data ===== -->
+  <rect x="36" y="454" width="928" height="150" rx="16" class="band" fill="#fdf1e2" stroke="#d97706"/>
+  <path d="M36,470 a16,16 0 0 1 16,-16 h134 v150 h-134 a16,16 0 0 1 -16,-16 z" fill="#d97706"/>
+  <text x="119" y="522" class="tab">SHTRESA E</text>
+  <text x="119" y="542" class="tab">TË DHËNAVE</text>
+
+  <g>
+    <rect x="204" y="482" width="176" height="94" rx="10" class="chip"/>
+    <text x="292" y="514" class="ct">Ruajtje lokale</text>
+    <text x="292" y="532" class="cs">expo-secure-store</text>
+    <text x="292" y="547" class="cs">AsyncStorage</text>
+
+    <rect x="396" y="482" width="176" height="94" rx="10" class="chip"/>
+    <text x="484" y="514" class="ct">API i Fakultetit</text>
+    <text x="484" y="532" class="cs">/Token</text>
+    <text x="484" y="547" class="cs">/api/profile/details</text>
+
+    <rect x="588" y="482" width="176" height="94" rx="10" class="chip"/>
+    <text x="676" y="514" class="ct">API i Gjurmimit (GPS)</text>
+    <text x="676" y="532" class="cs">polling 10s</text>
+    <text x="676" y="547" class="cs">pozicionet e autobusëve</text>
+
+    <rect x="780" y="482" width="152" height="94" rx="10" class="chip"/>
+    <text x="856" y="514" class="ct">Të jashtme</text>
+    <text x="856" y="532" class="cs">MapTiler · Google Maps</text>
+    <text x="856" y="547" class="cs">Sentry · Firebase</text>
+  </g>
+</svg>

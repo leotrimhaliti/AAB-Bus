@@ -5,15 +5,6 @@ import { useBusLocations } from '../hooks/useBusLocations';
 
 // Mock dependencies
 jest.mock('../hooks/useBusLocations');
-jest.mock('react-native-maps', () => {
-  const { View } = require('react-native');
-  return {
-    __esModule: true,
-    default: View,
-    Marker: View,
-    PROVIDER_GOOGLE: 'google',
-  };
-});
 
 const mockUseBusLocations = useBusLocations as jest.MockedFunction<typeof useBusLocations>;
 

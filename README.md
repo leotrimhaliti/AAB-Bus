@@ -1,133 +1,96 @@
-# 🚌 AAB Bus Tracking App
+# AAB Bus
 
-**Real-time bus tracking for AAB University**
+Real-time bus tracking app for AAB University, built with React Native and Expo. Students log in with their faculty account, see live bus positions on a map, check the departure schedule, and view their profile.
 
----
+## Features
 
-## 📱 Overview
+- Live map of active buses (Leaflet inside a WebView, polling a GPS API every 10 seconds)
+- Route timeline showing the stops ahead for a selected bus, with progress along the route
+- Stale-position handling: a bus position older than 30 seconds is shown as "last known" rather than live (see `lib/busFreshness.ts`)
+- Departure schedule per stop, computed from a fixed timetable
+- Login and password reset against the faculty API, with token-based auto re-login
+- Offline support: cached bus data is shown when the network is unreachable
+- Crash and error reporting via Sentry, usage analytics via Firebase
 
-Cross-platform mobile application for **real-time GPS tracking** of university buses. Students and staff can view live bus locations, route information, and schedules.
+## Tech stack
 
-### 🎯 Key Highlights
+- React Native 0.81, Expo SDK 54, Expo Router 6
+- TypeScript 5.9, React 19
+- Leaflet (via `react-native-webview`) for the map
+- Jest and React Native Testing Library for tests
+- Sentry for error tracking, Firebase Analytics for usage
+- EAS Build for native builds and store submission
 
-- 📍 **Live GPS Tracking** - Real-time bus location updates
-- 🗺️ **Interactive Maps** - Leaflet-based map with route visualization
-- 🔐 **Secure Authentication** - Supabase Auth + Faculty API integration
-- � **Bus Schedules** - View departure times and routes
-- 🌍 **Albanian Localization** - Full Albanian language support
-- 📴 **Offline Support** - Cached data when network unavailable
+There is no local database. Data comes from two external REST APIs (faculty auth/profile, and bus GPS positions), a hardcoded list of stops, and local device storage (`expo-secure-store` for tokens, `AsyncStorage` for an offline cache).
 
----
-
-## ✨ Features
-
-| Feature | Description |
-|---------|-------------|
-| 🚌 Real-time Tracking | Live bus location updates with polling |
-| 🗺️ Route Visualization | Bus routes with stops and progress tracking |
-| 📅 Schedule View | Bus departure times and booking system |
-| 👤 User Profiles | Student/staff profile management |
-| 🔒 Secure Auth | Token encryption with expo-secure-store |
-| 📴 Offline Mode | Cached data when network unavailable |
-|  Error Tracking | Sentry integration for crash reporting |
-
----
-
-## 🛠️ Tech Stack
-
-### Frontend
-- **Framework:** React Native 0.81.5 with Expo SDK 54
-- **Language:** TypeScript 5.9.2
-- **Navigation:** Expo Router 6.0
-- **Maps:** Leaflet (WebView-based)
-- **Icons:** Lucide React Native
-
-### Backend
-- **Database:** Supabase (PostgreSQL)
-- **Authentication:** Supabase Auth + Faculty API
-- **Storage:** Expo SecureStore (encrypted tokens)
-- **Caching:** AsyncStorage
-
-### Development & Testing
-- **Testing:** Jest + React Native Testing Library
-- **Linting:** ESLint
-- **Error Tracking:** Sentry React Native
-
----
-
-## 🏗️ Project Structure
+## Project structure
 
 ```
-aab/
-├── app/                      # Application screens (Expo Router)
-│   ├── (tabs)/               # Tab navigation screens
-│   │   ├── index.tsx         # Bus tracking map
-│   │   ├── orari.tsx         # Schedule/booking screen
-│   │   └── profile.tsx       # User profile
-│   ├── login.tsx             # Login screen
-│   └── _layout.tsx           # Root layout
-├── components/               # Reusable components
-│   ├── ui/                   # UI components (Skeleton, ErrorState, etc.)
-│   ├── LeafletMap.tsx        # Map component
-│   └── ErrorBoundary.tsx     # Error boundary
-├── contexts/                 # React contexts
-│   └── AuthContext.tsx       # Authentication context
-├── hooks/                    # Custom React hooks
-│   ├── useBusLocations.ts    # Bus data fetching
-│   ├── useBusProgress.ts     # Bus route progress tracking
-│   ├── useBusStops.ts        # Bus stops data
-│   ├── useWebSocket.ts       # WebSocket connection
-│   └── useNetworkStatus.ts   # Network monitoring
-├── lib/                      # Utility libraries
-│   ├── supabase.ts           # Supabase client
-│   ├── validation.ts         # Form validation
-│   ├── cache.ts              # Caching utilities
-│   └── fetchWithRetry.ts     # HTTP retry logic
-├── types/                    # TypeScript definitions
-├── constants/                # App constants
-└── __tests__/                # Test files
+app/                    Screens (Expo Router)
+  login.tsx             Login + forgot-password
+  (tabs)/index.tsx       Live map
+  (tabs)/orari.tsx        Departure schedule
+  (tabs)/profile.tsx      User profile
+components/             LeafletMap, BusTripTimeline, ErrorBoundary, SplashScreen
+components/ui/          ErrorState, Skeleton
+contexts/AuthContext.tsx  Login, logout, token refresh, session state
+hooks/                  useBusLocations, useBusProgress, useBusStops,
+                        useNetworkStatus, useWebSocket
+lib/                    config, validation, cache, fetchWithRetry,
+                        busFreshness, analytics
+types/                  Shared TypeScript types
+__tests__/              Jest test suites
+docs/                   Architecture diagrams
 ```
 
----
+## Setup
 
-## 🚀 Getting Started
-
-### Prerequisites
-- Node.js 18+
-- npm or yarn
-- Expo CLI
-
-### Installation
+Requirements: Node.js 18+, npm, and either the Expo Go app on a phone or an Android/iOS emulator.
 
 ```bash
-# Install dependencies
 npm install
+cp .env.example .env
+```
 
-# Start development server
+Fill in `.env`:
+
+```
+GOOGLE_MAPS_API_KEY=...
+EXPO_PUBLIC_API_URL=...          # faculty API: auth + profile
+EXPO_PUBLIC_BUS_API_URL=...      # GPS bus-location endpoint
+EXPO_PUBLIC_MAPTILER_API_KEY=... # map tiles
+EXPO_PUBLIC_SENTRY_DSN=...       # optional, error tracking
+```
+
+`EXPO_PUBLIC_API_URL` and `EXPO_PUBLIC_BUS_API_URL` are read directly in code (`contexts/AuthContext.tsx`, `app/(tabs)/index.tsx`). Without them, login and the live map won't work. Bus stops are a fixed list in `hooks/useBusStops.ts`, so the schedule and route screens work without a backend.
+
+Start the dev server:
+
+```bash
 npx expo start
 ```
 
-### Environment Variables
+Then open it with Expo Go (scan the QR code), or press `a` for Android, `i` for iOS, `w` for web.
 
-Create a `.env` file with:
-```
-EXPO_PUBLIC_SUPABASE_URL=your_supabase_url
-EXPO_PUBLIC_SUPABASE_ANON_KEY=your_supabase_key
-EXPO_PUBLIC_BUS_API_URL=your_bus_api_url
-EXPO_PUBLIC_API_URL=your_api_url
-```
-
----
-
-## 🧪 Testing
+## Scripts
 
 ```bash
-# Run tests
-npm test
+npm test          # run the Jest suite
+npm run typecheck  # tsc --noEmit
+npm run lint       # expo lint
+npm run android    # expo run:android
+npm run ios        # expo run:ios
+npm run build:web  # expo export --platform web
 ```
 
----
+## Building for a device
 
-## 📝 License
+Native builds go through EAS (`eas.json` defines `development`, `preview`, and `production` profiles):
+
+```bash
+eas build --profile preview
+```
+
+## License
 
 AAB University. All rights reserved.

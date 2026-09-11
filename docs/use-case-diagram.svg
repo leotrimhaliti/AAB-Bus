@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1060 850" font-family="Segoe UI, Arial, sans-serif">
+  <style>
+    .title { font-size: 20px; font-weight: 700; fill: #0f172a; }
+    .boundary { fill: #f8fafc; stroke: #334155; stroke-width: 2; }
+    .boundary-label { font-size: 15px; font-weight: 700; fill: #334155; }
+    .uc { fill: #ffffff; stroke: #c62829; stroke-width: 1.8; }
+    .uc-text { font-size: 12.5px; fill: #1e293b; text-anchor: middle; }
+    .actor-label { font-size: 13px; font-weight: 600; fill: #0f172a; text-anchor: middle; }
+    .assoc { stroke: #475569; stroke-width: 1.3; fill: none; }
+    .inc { stroke: #2563eb; stroke-width: 1.3; stroke-dasharray: 6 4; fill: none; }
+    .inc-text { font-size: 10.5px; fill: #2563eb; text-anchor: middle; font-style: italic; }
+    .stick { stroke: #0f172a; stroke-width: 2; fill: none; }
+  </style>
+
+  <text x="530" y="34" text-anchor="middle" class="title">Figura 1 — Diagrami i Rasteve të Përdorimit (AAB Bus Tracking)</text>
+
+  <!-- System boundary -->
+  <rect x="345" y="70" width="410" height="720" rx="10" class="boundary"/>
+  <text x="550" y="95" text-anchor="middle" class="boundary-label">Sistemi AAB Bus</text>
+
+  <!-- Primary actor: Studenti -->
+  <g>
+    <circle cx="85" cy="410" r="14" class="stick"/>
+    <line x1="85" y1="424" x2="85" y2="470" class="stick"/>
+    <line x1="55" y1="442" x2="115" y2="442" class="stick"/>
+    <line x1="85" y1="470" x2="60" y2="506" class="stick"/>
+    <line x1="85" y1="470" x2="110" y2="506" class="stick"/>
+    <text x="85" y="528" class="actor-label">Studenti</text>
+  </g>
+
+  <!-- Secondary actor: Faculty API -->
+  <g>
+    <circle cx="975" cy="210" r="14" class="stick"/>
+    <line x1="975" y1="224" x2="975" y2="270" class="stick"/>
+    <line x1="945" y1="242" x2="1005" y2="242" class="stick"/>
+    <line x1="975" y1="270" x2="950" y2="306" class="stick"/>
+    <line x1="975" y1="270" x2="1000" y2="306" class="stick"/>
+    <text x="975" y="328" class="actor-label">API i Fakultetit (AAB)</text>
+  </g>
+
+  <!-- Secondary actor: GPS tracking API -->
+  <g>
+    <circle cx="975" cy="500" r="14" class="stick"/>
+    <line x1="975" y1="514" x2="975" y2="560" class="stick"/>
+    <line x1="945" y1="532" x2="1005" y2="532" class="stick"/>
+    <line x1="975" y1="560" x2="950" y2="596" class="stick"/>
+    <line x1="975" y1="560" x2="1000" y2="596" class="stick"/>
+    <text x="975" y="618" class="actor-label">API i Gjurmimit të</text>
+    <text x="975" y="634" class="actor-label">Autobusëve (GPS)</text>
+  </g>
+
+  <!-- Associations: Studenti -> use cases -->
+  <path class="assoc" d="M118,398 C250,250 330,170 400,145"/>
+  <path class="assoc" d="M118,408 C250,320 330,245 400,210"/>
+  <path class="assoc" d="M119,418 C250,375 330,305 400,275"/>
+  <path class="assoc" d="M120,426 C255,415 335,375 400,352"/>
+  <path class="assoc" d="M120,434 C255,432 335,422 400,420"/>
+  <path class="assoc" d="M120,442 C255,472 335,486 400,490"/>
+  <path class="assoc" d="M119,450 C255,525 335,548 400,560"/>
+  <path class="assoc" d="M118,456 C255,595 335,618 400,635"/>
+  <path class="assoc" d="M117,462 C255,655 335,678 400,700"/>
+  <path class="assoc" d="M116,468 C265,705 350,742 435,762"/>
+
+  <!-- Associations: Faculty API -> use cases -->
+  <path class="assoc" d="M700,145 C820,155 905,195 948,228"/>
+  <path class="assoc" d="M700,210 C825,214 905,224 948,236"/>
+  <path class="assoc" d="M700,275 C825,266 905,252 950,244"/>
+  <path class="assoc" d="M700,700 C865,520 935,300 955,262"/>
+
+  <!-- Associations: GPS API -> use cases -->
+  <path class="assoc" d="M700,352 C830,405 905,452 948,474"/>
+  <path class="assoc" d="M700,560 C830,545 905,512 948,490"/>
+
+  <!-- Use cases -->
+  <g>
+    <ellipse cx="550" cy="145" rx="150" ry="26" class="uc"/><text x="550" y="149" class="uc-text">Kyçu në aplikacion</text>
+    <ellipse cx="550" cy="210" rx="150" ry="26" class="uc"/><text x="550" y="214" class="uc-text">Rikthe fjalëkalimin (SMS)</text>
+    <ellipse cx="550" cy="275" rx="150" ry="26" class="uc"/><text x="550" y="279" class="uc-text">Rihyrje automatike me token</text>
+    <ellipse cx="550" cy="352" rx="150" ry="26" class="uc"/><text x="550" y="356" class="uc-text">Shiko hartën në kohë reale</text>
+    <ellipse cx="550" cy="420" rx="150" ry="26" class="uc"/><text x="550" y="424" class="uc-text">Zgjidh një autobus</text>
+    <ellipse cx="550" cy="490" rx="150" ry="26" class="uc"/><text x="550" y="494" class="uc-text">Shiko stacionet e linjës</text>
+    <ellipse cx="550" cy="560" rx="150" ry="26" class="uc"/><text x="550" y="564" class="uc-text">Ndjek progresin e udhëtimit</text>
+    <ellipse cx="550" cy="635" rx="150" ry="26" class="uc"/><text x="550" y="639" class="uc-text">Shiko orarin e nisjeve</text>
+    <ellipse cx="550" cy="700" rx="150" ry="26" class="uc"/><text x="550" y="704" class="uc-text">Shiko profilin personal</text>
+    <ellipse cx="550" cy="762" rx="128" ry="23" class="uc"/><text x="550" y="766" class="uc-text">Dil nga llogaria</text>
+  </g>
+
+  <!-- Include relationships -->
+  <path class="inc" d="M550,446 L550,464"/>
+  <text x="601" y="459" class="inc-text">&#171;include&#187;</text>
+  <path class="inc" d="M550,516 L550,534"/>
+  <text x="601" y="529" class="inc-text">&#171;include&#187;</text>
+
+  <!-- Legend -->
+  <g transform="translate(360,812)">
+    <line x1="0" y1="0" x2="30" y2="0" class="assoc"/><text x="38" y="4" style="font-size:11px;fill:#475569">asociim</text>
+    <line x1="120" y1="0" x2="150" y2="0" class="inc"/><text x="158" y="4" style="font-size:11px;fill:#2563eb">&#171;include&#187;</text>
+  </g>
+</svg>

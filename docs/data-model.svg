@@ -1,0 +1,163 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 770" font-family="Segoe UI, Arial, sans-serif">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#475569"/>
+    </marker>
+  </defs>
+  <style>
+    .ent { fill:#ffffff; stroke:#94a3b8; stroke-width:1.3; }
+    .hd  { font-size:13px; font-weight:800; fill:#ffffff; }
+    .row { font-size:10.5px; fill:#1f2937; }
+    .key { font-size:10.5px; font-weight:800; }
+    .rel { stroke:#475569; stroke-width:1.6; fill:none; marker-start:url(#a); marker-end:url(#a); }
+    .reld{ stroke:#94a3b8; stroke-width:1.4; fill:none; stroke-dasharray:5 4; marker-end:url(#a); }
+    .rl  { font-size:9.5px; fill:#475569; }
+    .card-n { font-size:9.5px; font-weight:800; fill:#334155; }
+  </style>
+
+  <rect x="2" y="2" width="1096" height="766" rx="20" fill="#f1f5f9"/>
+  <text x="550" y="38" text-anchor="middle" font-size="23" font-weight="800" fill="#0f2c4c">Figura 4 — Modeli i të Dhënave të Sistemit</text>
+  <text x="550" y="60" text-anchor="middle" font-size="11" fill="#64748b">Sistemi s'ka bazë të dhënash relacionale lokale — entitetet vijnë nga API-t e jashtme, ruajtja lokale dhe të dhëna të derivuara.</text>
+
+  <!-- ================= Profili ================= -->
+  <g>
+    <rect x="40" y="88" width="240" height="163" rx="8" class="ent"/>
+    <path d="M40,96 a8,8 0 0 1 8,-8 h224 a8,8 0 0 1 8,8 v20 h-240 z" fill="#2563eb"/>
+    <text x="52" y="110" class="hd">Profili</text>
+    <text x="270" y="110" text-anchor="end" font-size="9" fill="#dbeafe">API i Fakultetit</text>
+    <text x="52" y="136" class="row"><tspan class="key" fill="#2563eb">PK</tspan>  adresaf (email) · string</text>
+    <text x="52" y="154" class="row">emri · string</text>
+    <text x="52" y="172" class="row">mbiemri · string</text>
+    <text x="52" y="190" class="row">fakulteti · string</text>
+    <text x="52" y="208" class="row">group · string</text>
+    <text x="52" y="226" class="row">datelindja · string</text>
+    <text x="52" y="244" class="row">image · url</text>
+  </g>
+
+  <!-- ================= Sesioni ================= -->
+  <g>
+    <rect x="40" y="322" width="240" height="82" rx="8" class="ent"/>
+    <path d="M40,330 a8,8 0 0 1 8,-8 h224 a8,8 0 0 1 8,8 v20 h-240 z" fill="#d97706"/>
+    <text x="52" y="344" class="hd">Sesioni</text>
+    <text x="270" y="344" text-anchor="end" font-size="9" fill="#fde9d3">SecureStore (lokal)</text>
+    <text x="52" y="370" class="row"><tspan class="key" fill="#d97706">PK</tspan>  access_token · string</text>
+    <text x="52" y="388" class="row">refresh_token · string</text>
+  </g>
+
+  <!-- ================= Linja ================= -->
+  <g>
+    <rect x="360" y="88" width="210" height="100" rx="8" class="ent"/>
+    <path d="M360,96 a8,8 0 0 1 8,-8 h194 a8,8 0 0 1 8,8 v20 h-210 z" fill="#64748b"/>
+    <text x="372" y="110" class="hd">Linja</text>
+    <text x="560" y="110" text-anchor="end" font-size="9" fill="#e2e8f0">e derivuar</text>
+    <text x="372" y="136" class="row"><tspan class="key" fill="#64748b">PK</tspan>  id · int</text>
+    <text x="372" y="154" class="row">emri · string</text>
+    <text x="372" y="172" class="row">nr_stacioneve · int</text>
+  </g>
+
+  <!-- ================= Stacioni ================= -->
+  <g>
+    <rect x="345" y="240" width="235" height="150" rx="8" class="ent"/>
+    <path d="M345,248 a8,8 0 0 1 8,-8 h219 a8,8 0 0 1 8,8 v20 h-235 z" fill="#16a34a"/>
+    <text x="357" y="262" class="hd">Stacioni</text>
+    <text x="570" y="262" text-anchor="end" font-size="9" fill="#dcfce7">të dhëna statike</text>
+    <text x="357" y="288" class="row"><tspan class="key" fill="#16a34a">PK</tspan>  id · int</text>
+    <text x="357" y="306" class="row">name · string</text>
+    <text x="357" y="324" class="row">latitude · number</text>
+    <text x="357" y="342" class="row">longitude · number</text>
+    <text x="357" y="360" class="row">stop_order · int</text>
+    <text x="357" y="378" class="row">created_at · datetime?</text>
+  </g>
+
+  <!-- ================= Nisja ================= -->
+  <g>
+    <rect x="640" y="240" width="220" height="100" rx="8" class="ent"/>
+    <path d="M640,248 a8,8 0 0 1 8,-8 h204 a8,8 0 0 1 8,8 v20 h-220 z" fill="#64748b"/>
+    <text x="652" y="262" class="hd">Nisja (orari)</text>
+    <text x="850" y="262" text-anchor="end" font-size="9" fill="#e2e8f0">e derivuar</text>
+    <text x="652" y="288" class="row"><tspan class="key" fill="#64748b">FK</tspan>  stop_id → Stacioni.id</text>
+    <text x="652" y="306" class="row">ora · "HH:MM"</text>
+    <text x="652" y="324" class="row">offset_minutes · int</text>
+  </g>
+
+  <!-- ================= Autobusi ================= -->
+  <g>
+    <rect x="360" y="470" width="210" height="82" rx="8" class="ent"/>
+    <path d="M360,478 a8,8 0 0 1 8,-8 h194 a8,8 0 0 1 8,8 v20 h-210 z" fill="#7c3aed"/>
+    <text x="372" y="492" class="hd">Autobusi</text>
+    <text x="560" y="492" text-anchor="end" font-size="9" fill="#ede9fe">API i Gjurmimit</text>
+    <text x="372" y="518" class="row"><tspan class="key" fill="#7c3aed">PK</tspan>  bus_id · string</text>
+    <text x="372" y="536" class="row">name · string?</text>
+  </g>
+
+  <!-- ================= Pozicioni ================= -->
+  <g>
+    <rect x="640" y="392" width="255" height="190" rx="8" class="ent"/>
+    <path d="M640,400 a8,8 0 0 1 8,-8 h239 a8,8 0 0 1 8,8 v20 h-255 z" fill="#7c3aed"/>
+    <text x="652" y="414" class="hd">Pozicioni</text>
+    <text x="885" y="414" text-anchor="end" font-size="9" fill="#ede9fe">API i Gjurmimit</text>
+    <text x="652" y="440" class="row"><tspan class="key" fill="#7c3aed">FK</tspan>  bus_id → Autobusi.bus_id</text>
+    <text x="652" y="458" class="row">lat · string</text>
+    <text x="652" y="476" class="row">lng · string</text>
+    <text x="652" y="494" class="row">heading / angle · string</text>
+    <text x="652" y="512" class="row">speed · string</text>
+    <text x="652" y="530" class="row">loc_valid · "0" | "1"</text>
+    <text x="652" y="548" class="row">dt_tracker / dt_server · datetime</text>
+    <text x="652" y="566" class="row">timestamp · number</text>
+  </g>
+
+  <!-- ================= Cache Lokal ================= -->
+  <g>
+    <rect x="915" y="392" width="165" height="100" rx="8" class="ent"/>
+    <path d="M915,400 a8,8 0 0 1 8,-8 h149 a8,8 0 0 1 8,8 v20 h-165 z" fill="#d97706"/>
+    <text x="927" y="414" class="hd">Cache Lokal</text>
+    <text x="927" y="440" class="row"><tspan class="key" fill="#d97706">PK</tspan>  key · string</text>
+    <text x="927" y="458" class="row">value · JSON</text>
+    <text x="927" y="476" class="row">last_update · datetime</text>
+  </g>
+
+  <!-- ================= Relationships ================= -->
+  <!-- Profili 1 - 1 Sesioni -->
+  <path class="rel" d="M160,251 L160,322"/>
+  <text x="168" y="278" class="rl">1</text><text x="168" y="315" class="rl">1</text>
+  <text x="168" y="297" class="rl">ka sesion</text>
+
+  <!-- Linja 1 - 1..* Stacioni -->
+  <path class="rel" d="M462,188 L462,240"/>
+  <text x="470" y="204" class="rl">1</text><text x="470" y="234" class="rl">1..∗</text>
+  <text x="470" y="220" class="rl">renditur nga stop_order</text>
+
+  <!-- Stacioni 1 - 0..* Nisja -->
+  <path class="rel" d="M580,300 L640,290"/>
+  <text x="588" y="296" class="rl">1</text><text x="612" y="284" class="rl">0..∗</text>
+
+  <!-- Autobusi * - 1 Linja (operon në linjë) -->
+  <path class="rel" d="M360,500 C310,500 300,220 300,190 C300,150 330,140 360,140"/>
+  <text x="286" y="330" class="rl">∗</text><text x="330" y="132" class="rl">1</text>
+  <text x="150" y="470" class="rl">operon në linjë</text>
+
+  <!-- Autobusi -> Stacioni : progresi (derivuar) -->
+  <path class="reld" d="M462,470 L462,390"/>
+  <text x="470" y="432" class="rl">progresi ndaj stacionit (derivuar)</text>
+
+  <!-- Autobusi 1 - 1 Pozicioni -->
+  <path class="rel" d="M570,510 L640,470"/>
+  <text x="578" y="506" class="rl">1</text><text x="612" y="474" class="rl">1</text>
+  <text x="560" y="530" class="rl">raporton pozicionin</text>
+
+  <!-- Pozicioni * - 1 Cache -->
+  <path class="rel" d="M895,455 L915,450"/>
+  <text x="893" y="470" class="rl">∗</text><text x="905" y="443" class="rl">1</text>
+  <text x="836" y="378" class="rl">fotografi (snapshot) në cache</text>
+
+  <!-- ================= Legend ================= -->
+  <g>
+    <rect x="40" y="470" width="290" height="118" rx="8" fill="#ffffff" stroke="#cbd5e1"/>
+    <text x="52" y="490" font-size="11" font-weight="800" fill="#0f2c4c">Burimi i të dhënave</text>
+    <rect x="52" y="500" width="12" height="12" rx="3" fill="#2563eb"/><text x="72" y="510" font-size="10" fill="#334155">API i Fakultetit (auth + profili)</text>
+    <rect x="52" y="518" width="12" height="12" rx="3" fill="#7c3aed"/><text x="72" y="528" font-size="10" fill="#334155">API i Gjurmimit GPS (autobusët)</text>
+    <rect x="52" y="536" width="12" height="12" rx="3" fill="#16a34a"/><text x="72" y="546" font-size="10" fill="#334155">Të dhëna statike (stacionet e linjës)</text>
+    <rect x="52" y="554" width="12" height="12" rx="3" fill="#d97706"/><text x="72" y="564" font-size="10" fill="#334155">Ruajtje lokale (SecureStore / AsyncStorage)</text>
+    <rect x="52" y="572" width="12" height="12" rx="3" fill="#64748b"/><text x="72" y="582" font-size="10" fill="#334155">E derivuar në kohë ekzekutimi</text>
+  </g>
+</svg>
